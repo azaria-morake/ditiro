@@ -1,0 +1,30 @@
+The briefing is fine. However, when fist started this concept, we clearly stated that it's an intelligent organizer. This briefing is very much outdated. Many apps are already like this. Ditiro is not just a url, it is an actual AI who embodies the very essence of the name. He talks to the user, and from what the user describe he creates the task with sub-tasks. He is intelligent and able to infer where users may be ambiguous. But will not create tasks without the users approval. e.g:
+
+User: "I need to schedule 3 meeting for next"
+[The user wasn't precise]
+Ditiro: Asks questions for context: What are the meetings about, when are you meeting them(date and time) so I can help you prepare properly.
+User: "Business On the 3rd at 1pm, Lunch on the 4th at 1pm, and Business on the 5th 8pm in Sandton"
+
+Ditiro: Excellent. We have enough time to prepare. I have broken down the tasks into a list of subtasks. Here they are:
+
+[Displays a card]
+
+- Business meeting 1pm [accept][reject]
+- Lunch at 1pm on the 3rd [accept][reject]
+- Business meeting in Sandton on the 5th at 8pm [accept][reject]
+
+[accept all][reject all]
+
+User: [accept all]
+
+Ditiro: Awesome. The task has been added to your task manager accessible in the task bar section accessible on the sidebar. :) Let me know if you want to change anything or if, in the future, you want to modify the task or subtasks. Just open this chat and tell me what you want to modify and I will interact with the task on your behalf. :)
+
+User: Wow, thanks so much Ditiro.
+
+Ditiro: You're welcome. Anything else I can help with today?
+
+User: No, that'll be all.
+
+Ditiro: Danko!
+
+
