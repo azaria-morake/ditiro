@@ -67,8 +67,11 @@ export async function generateLLMResponse(
       console.warn("Groq Rate Limit Reached. Falling back to Gemini...");
       try {
         return await generateGeminiResponse(messages, options);
-      } catch (geminiError) {
+      } catch (geminiError: any) {
         console.error("Gemini Fallback Error:", geminiError);
+        if (geminiError?.status === 429 || geminiError?.message?.includes("429")) {
+          throw new Error("DOUBLE_QUOTA_EXHAUSTION");
+        }
         throw geminiError;
       }
     }

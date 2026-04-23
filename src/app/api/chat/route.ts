@@ -77,6 +77,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(parsed);
 
   } catch (error: any) {
+    if (error.message === "DOUBLE_QUOTA_EXHAUSTION") {
+        return NextResponse.json({ error: "Both of my AI brains (Groq & Gemini) have hit their daily limits right now! 😅 Please use the '+ Add New Task' button in the Tasks tab to manually capture things for now. I'll sync with them when my quota resets!" }, { status: 429 });
+    }
     console.error('Groq Chat Error:', error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }

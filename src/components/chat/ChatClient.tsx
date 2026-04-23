@@ -9,6 +9,8 @@ import ProposalCard, { TaskProposal } from "./ProposalCard";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import TaskCard from "@/components/tasks/TaskCard";
+import CreateTaskCard from "@/components/tasks/CreateTaskCard";
+import { DitiroIcon } from "../brand/Logos";
 
 export default function ChatClient() {
     const searchParams = useSearchParams();
@@ -20,11 +22,13 @@ export default function ChatClient() {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
+    const nParam = searchParams?.get('n');
 
     const currentChatId = cParam || activeChatId;
 
     useEffect(() => {
-        if(cParam && cParam !== activeChatId) {
+        if(cParam !== activeChatId) {
             setActiveChatId(cParam);
         }
     }, [cParam, activeChatId, setActiveChatId]);
@@ -37,6 +41,12 @@ export default function ChatClient() {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        if (!isLoading && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isLoading]);
 
     const executeMessage = async (text: string, isRetry = false) => {
         if(!text.trim() || isLoading) return;
@@ -99,7 +109,10 @@ export default function ChatClient() {
                 })
             });
 
-            if(!res.ok) throw new Error("API failed");
+            if(!res.ok) {
+                const errData = await res.json().catch(() => null);
+                throw new Error(errData?.error || "API failed");
+            }
             const data = await res.json();
             
             const isProposal = !!data.proposal;
@@ -116,13 +129,13 @@ export default function ChatClient() {
             
             await db.messages.add(assistMsg);
             await db.chats.update(cId, { updatedAt: Date.now() });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to send message", error);
             const errorMsg: Message = {
                 id: crypto.randomUUID(),
                 chatId: cId,
                 role: 'assistant',
-                content: "I'm having trouble connecting to my brain right now! (Network/Server Error). Give me a moment and try again 😊",
+                content: error.message && error.message !== "API failed" ? error.message : "I'm having trouble connecting to my brain right now! (Network/Server Error). Give me a moment and try again 😊",
                 type: 'text',
                 timestamp: Date.now()
             };
@@ -138,6 +151,12 @@ export default function ChatClient() {
         const text = input.trim();
         if(!text) return;
         setInput("");
+        
+        // Reset textarea height
+        if (inputRef.current) {
+            inputRef.current.style.height = '52px';
+        }
+        
         await executeMessage(text);
     };
 
@@ -150,7 +169,7 @@ export default function ChatClient() {
         const lastUserText = userMsgs[userMsgs.length - 1].content;
         
         const lastMsg = messages[messages.length - 1];
-        if (lastMsg.role === 'assistant' && lastMsg.content.includes("trouble connecting")) {
+        if (lastMsg.role === 'assistant') {
             await db.messages.delete(lastMsg.id);
         }
 
@@ -223,7 +242,7 @@ export default function ChatClient() {
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                 {!currentChatId || (messages?.length === 0) ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                        <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center text-3xl mb-4 shadow-lg shadow-emerald-900/50">👋</div>
+                        <DitiroIcon className="w-20 h-20 text-[#e05012] mb-6" />
                         <h2 className="text-2xl font-bold text-neutral-100 mb-2">Hi, I'm Ditiro.</h2>
                         <p className="text-neutral-400 max-w-sm text-sm">Tell me what you need to get done, and I'll help you break it down.</p>
                     </div>
@@ -235,7 +254,7 @@ export default function ChatClient() {
                         )}>
                             <div className="flex flex-col max-w-[90%] sm:max-w-[75%]">
                                 <div className={clsx(
-                                    "text-sm rounded-2xl px-5 py-3 leading-relaxed",
+                                    "text-sm rounded-2xl px-5 py-3 leading-relaxed whitespace-pre-wrap",
                                     msg.role === 'user' ? "bg-neutral-800 text-neutral-100 rounded-br-sm ml-auto" : "bg-neutral-900/50 border border-neutral-800 text-neutral-200"
                                 )}>
                                     {msg.content}
@@ -270,7 +289,7 @@ export default function ChatClient() {
                 )}
                 {isLoading && (
                     <div className="flex justify-start">
-                        <div className="bg-transparent text-neutral-500 rounded-2xl px-2 py-3 flex items-center gap-2 text-sm italic">
+                        <div className="bg-transparent text-[#e05012] rounded-2xl px-2 py-3 flex items-center gap-2 text-sm italic font-medium">
                             <Loader2 className="animate-spin" size={16} /> Ditiro is thinking...
                         </div>
                     </div>
@@ -278,28 +297,46 @@ export default function ChatClient() {
                 <div ref={messagesEndRef} />
             </div>
 
-            <div className="p-4 bg-neutral-950 border-t border-neutral-900 relative z-10">
-                <form onSubmit={handleSend} className="max-w-4xl mx-auto relative flex items-center">
-                    <input 
-                        type="text" 
+            <div className="p-4 bg-neutral-950 border-t border-neutral-900 relative z-10 shrink-0">
+                <form onSubmit={handleSend} className="max-w-4xl mx-auto relative flex items-end">
+                    <textarea 
+                        ref={inputRef}
                         value={input}
-                        onChange={(e) => setInput(e.target.value)}
+                        onChange={(e) => {
+                            setInput(e.target.value);
+                            e.target.style.height = '52px';
+                            const scrollHeight = e.target.scrollHeight;
+                            e.target.style.height = scrollHeight > 150 ? '150px' : `${scrollHeight}px`;
+                            e.target.style.overflowY = scrollHeight > 150 ? 'auto' : 'hidden';
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
                         placeholder="Type your task details here..."
                         disabled={isLoading}
-                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-full py-3.5 pl-6 pr-14 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-shadow disabled:opacity-50 text-sm"
+                        rows={1}
+                        style={{ overflowY: 'hidden' }}
+                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-3xl py-3.5 pl-6 pr-14 focus:outline-none focus:ring-1 focus:ring-[#e05012] transition-shadow disabled:opacity-50 text-sm resize-none min-h-[52px] leading-relaxed"
                     />
                     <button 
                         type="submit" 
                         disabled={!input.trim() || isLoading}
-                        className="absolute right-2 p-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-full disabled:opacity-50 disabled:hover:bg-emerald-600 transition-colors"
+                        className="absolute right-2 shrink-0 bottom-[9px] p-2 bg-[#e05012] hover:bg-[#e05012]/80 text-white rounded-full disabled:opacity-50 disabled:hover:bg-[#e05012] transition-colors"
                     >
-                        <Send size={18} />
+                        <DitiroIcon className="w-[18px] h-[18px] text-white" />
                     </button>
                 </form>
             </div>
 
             {tParam && (
                <TaskCard taskId={tParam} onClose={() => router.push(cParam ? '/?c=' + cParam : '/')} />
+            )}
+
+            {nParam && (
+               <CreateTaskCard currentChatId={currentChatId || undefined} onClose={() => router.push(cParam ? '/?c=' + cParam : '/')} />
             )}
         </div>
     );

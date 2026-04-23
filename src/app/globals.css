@@ -7,4 +7,34 @@
         filter: invert(0.8);
         cursor: pointer;
     }
+
+    /* Standard scrollbar for Firefox */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #262626 transparent;
+    }
+
+    /* Webkit scrollbars (Chrome, Safari, Edge) */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #262626;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #404040;
+    }
+
+    /* Special hint for the theme color on focus/hover in certain areas if needed */
+    .chat-scroll-area::-webkit-scrollbar-thumb {
+        background: #262626;
+    }
 }

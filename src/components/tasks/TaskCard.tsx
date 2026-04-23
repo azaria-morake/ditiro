@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/dexie";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Check, Clock, X, ChevronRight, MessageSquare } from "lucide-react";
+import { Check, Clock, X, ChevronRight, MessageSquare, Plus } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -27,6 +27,8 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
     const [newTargetTime, setNewTargetTime] = useState("");
     const [parentTargetDate, setParentTargetDate] = useState("");
     const [parentTargetTime, setParentTargetTime] = useState("");
+    
+    const [newSubtaskText, setNewSubtaskText] = useState("");
     
     const todayStr = new Date().toISOString().split('T')[0];
 
@@ -118,9 +120,23 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
         }
     };
 
+    const handleAddManualSubtask = async () => {
+        if (!newSubtaskText.trim()) return;
+        
+        const newOrder = subtasks ? subtasks.length : 0;
+        await db.subtasks.add({
+            id: crypto.randomUUID(),
+            taskId,
+            text: newSubtaskText.trim(),
+            completed: false,
+            order: newOrder
+        });
+        setNewSubtaskText("");
+    };
+
     return (
-        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-neutral-900 w-full max-w-md h-[80vh] sm:h-[600px] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-neutral-800">
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-6 py-12 bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-neutral-900 w-full max-w-md h-full max-h-[700px] rounded-2xl flex flex-col overflow-hidden shadow-2xl border border-neutral-800">
                 
                 <div className="bg-neutral-800 p-4 border-b border-neutral-700 flex flex-col shrink-0 relative">
                     <button onClick={onClose} className="absolute right-4 top-4 p-1 rounded hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors">
@@ -130,7 +146,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                         <button onClick={handleToggleParentTask} 
                                 className={clsx(
                                     "mt-1 w-6 h-6 rounded flex items-center justify-center border transition-colors shrink-0",
-                                    task.status === 'completed' ? "bg-emerald-500 border-emerald-500 text-neutral-900" : "border-neutral-500 hover:border-emerald-400"
+                                    task.status === 'completed' ? "bg-[#e05012] border-[#e05012] text-neutral-900" : "border-neutral-500 hover:border-[#e05012]"
                                 )}>
                             {task.status === 'completed' && <Check size={16} strokeWidth={3} />}
                         </button>
@@ -147,7 +163,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                 </div>
                                 
                                 {task.dueDate && !editingParent && (
-                                    <div className="flex items-center gap-1 text-emerald-400 font-medium bg-emerald-400/10 px-2 py-0.5 rounded">
+                                    <div className="flex items-center gap-1 text-[#e05012] font-medium bg-[#e05012]/10 px-2 py-0.5 rounded">
                                         <Clock size={12} /> {task.dueDate} {task.dueTime}
                                     </div>
                                 )}
@@ -158,7 +174,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                         setParentTargetDate(task.dueDate || "");
                                         setParentTargetTime(task.dueTime || "");
                                     }
-                                }} className="flex items-center gap-1.5 text-neutral-400 hover:text-emerald-400 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-700 hover:border-emerald-500/50 transition-colors">
+                                }} className="flex items-center gap-1.5 text-neutral-400 hover:text-[#e05012] bg-neutral-900 px-2 py-0.5 rounded border border-neutral-700 hover:border-[#e05012]/50 transition-colors">
                                     <Clock size={12} /> <span className="text-xs font-semibold">Reschedule</span>
                                 </button>
                             </div>
@@ -173,7 +189,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                             <input type="date" min={todayStr} value={parentTargetDate} onChange={e => setParentTargetDate(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
                             <input type="time" value={parentTargetTime} onChange={e => setParentTargetTime(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
                         </div>
-                        <button onClick={() => handleSaveParentDelay(task.dueDate, task.dueTime)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-2 text-xs font-semibold mt-1">
+                        <button onClick={() => handleSaveParentDelay(task.dueDate, task.dueTime)} className="w-full bg-[#e05012] hover:bg-[#e05012]/90 text-white rounded py-2 text-xs font-semibold mt-1">
                             Save Reschedule
                         </button>
                     </div>
@@ -186,7 +202,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                 <button onClick={() => handleToggleSubtask(sub.id, sub.completed)} 
                                         className={clsx(
                                             "mt-0.5 w-5 h-5 rounded flex items-center justify-center border transition-colors shrink-0",
-                                            sub.completed ? "bg-emerald-500 border-emerald-500 text-neutral-900" : "border-neutral-500 hover:border-emerald-400"
+                                            sub.completed ? "bg-[#e05012] border-[#e05012] text-neutral-900" : "border-neutral-500 hover:border-[#e05012]"
                                         )}>
                                     {sub.completed && <Check size={14} strokeWidth={3} />}
                                 </button>
@@ -211,7 +227,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                         <input type="date" min={todayStr} value={newTargetDate} onChange={e => setNewTargetDate(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
                                         <input type="time" value={newTargetTime} onChange={e => setNewTargetTime(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
                                     </div>
-                                    <button onClick={() => handleSaveDelay(sub.id, sub.dueDate)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-1.5 text-xs font-semibold mt-1">
+                                    <button onClick={() => handleSaveDelay(sub.id, sub.dueDate)} className="w-full bg-[#e05012] hover:bg-[#e05012]/90 text-white rounded py-1.5 text-xs font-semibold mt-1">
                                         Update Details
                                     </button>
                                 </div>
@@ -224,7 +240,29 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                             )}
                         </div>
                     ))}
-                    {totalSubs === 0 && (
+                    <div className="mt-2 p-3 bg-neutral-800/30 rounded-xl border border-dashed border-neutral-700 flex items-center gap-3">
+                        <div className="w-5 h-5 rounded border border-neutral-600 flex items-center justify-center shrink-0 opacity-30"></div>
+                        <input 
+                            type="text"
+                            placeholder="Add a subtask..."
+                            value={newSubtaskText}
+                            autoFocus
+                            onChange={(e) => setNewSubtaskText(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleAddManualSubtask();
+                            }}
+                            className="flex-1 bg-transparent text-sm text-neutral-200 focus:outline-none"
+                        />
+                        <button 
+                            onClick={handleAddManualSubtask}
+                            disabled={!newSubtaskText.trim()}
+                            className="text-[#e05012] hover:text-blue-400 disabled:opacity-30 p-1 transition-colors"
+                        >
+                            <Plus size={20} />
+                        </button>
+                    </div>
+
+                    {totalSubs === 0 && !newSubtaskText && (
                         <div className="text-center text-neutral-500 mt-10 text-sm">
                             Task items will appear here.
                         </div>
@@ -232,7 +270,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                 </div>
 
                 {snackbarMsg && (
-                    <div className="absolute bottom-20 w-max max-w-[90%] left-1/2 -translate-x-1/2 bg-emerald-900 border border-emerald-700 text-emerald-100 p-3 rounded-lg text-sm shadow-xl flex items-start gap-2 z-10 animate-in slide-in-from-bottom-5">
+                    <div className="absolute bottom-20 w-max max-w-[90%] left-1/2 -translate-x-1/2 bg-[#ac3e0e] border border-[#e05012] text-white p-3 rounded-lg text-sm shadow-xl flex items-start gap-2 z-10 animate-in slide-in-from-bottom-5">
                         <span className="mt-0.5">💡</span>
                         <span>{snackbarMsg}</span>
                     </div>

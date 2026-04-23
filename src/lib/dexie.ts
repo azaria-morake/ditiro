@@ -32,7 +32,7 @@ export interface Message {
 
 export interface Task {
   id: string;
-  chatId: string;
+  chatId?: string;
   title: string;
   description?: string;
   status: 'active' | 'completed';
