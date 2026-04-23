@@ -14,6 +14,29 @@ export default function Sidebar() {
   const [activeTab, setActiveTab] = useState<'chats' | 'tasks'>('chats');
   const router = useRouter();
 
+  // Swipe gesture state
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    if (isLeftSwipe) {
+      setSidebarOpen(false);
+    }
+  };
+
   const chats = useLiveQuery(() => db.chats.toArray().then(arr => arr.sort((a, b) => b.updatedAt - a.updatedAt)));
   const tasks = useLiveQuery(() => db.tasks.toArray().then(arr => arr.sort((a, b) => b.updatedAt - a.updatedAt)));
 
@@ -49,6 +72,9 @@ export default function Sidebar() {
       )}
 
       <aside
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         className={clsx(
           "fixed inset-y-0 left-0 z-50 w-72 bg-neutral-900 border-r border-neutral-800 text-white transition-transform duration-300 md:static md:translate-x-0 flex flex-col",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -61,12 +87,19 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <div className="flex p-2 gap-2 border-b border-neutral-800">
+        <div className="flex p-2 gap-2 border-b border-neutral-800 relative group/tabs">
+          <div 
+            className="absolute top-2 bottom-2 bg-neutral-800 rounded transition-all duration-300 ease-in-out z-0"
+            style={{ 
+              width: 'calc(50% - 12px)',
+              left: activeTab === 'chats' ? '8px' : 'calc(50% + 4px)' 
+            }}
+          />
           <button
             onClick={() => setActiveTab('chats')}
             className={clsx(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded font-medium text-sm transition-colors",
-              activeTab === 'chats' ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"
+              "flex-1 flex items-center justify-center gap-2 py-2 rounded font-medium text-sm transition-colors z-10 relative",
+              activeTab === 'chats' ? "text-white" : "text-neutral-400 hover:text-white"
             )}
           >
             <MessageSquare size={16} /> Chats
@@ -74,8 +107,8 @@ export default function Sidebar() {
           <button
             onClick={() => setActiveTab('tasks')}
             className={clsx(
-              "flex-1 flex items-center justify-center gap-2 py-2 rounded font-medium text-sm transition-colors",
-              activeTab === 'tasks' ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"
+              "flex-1 flex items-center justify-center gap-2 py-2 rounded font-medium text-sm transition-colors z-10 relative",
+              activeTab === 'tasks' ? "text-white" : "text-neutral-400 hover:text-white"
             )}
           >
             <CheckSquare size={16} /> Tasks

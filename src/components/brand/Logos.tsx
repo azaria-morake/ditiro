@@ -44,3 +44,21 @@ export const DitiroIcon = ({ className }: LogoProps) => (
     aria-label="Ditiro Icon"
   />
 );
+
+/**
+ * LXGLogo component
+ */
+export const LXGLogo = ({ className }: LogoProps) => (
+  <svg viewBox="0 0 100 40" className={clsx("fill-current", className)} aria-label="LXG">
+    <path d="M10 5h10v30H10zM25 5h10l10 15-10 15h-10l10-15zM60 5h10v20h10V5h10v30H80V15H70v20H60z" />
+  </svg>
+);
+
+/**
+ * SparkleIcon component
+ */
+export const SparkleIcon = ({ className }: LogoProps) => (
+  <svg viewBox="0 0 24 24" className={clsx("fill-current", className)} aria-label="Sparkle">
+    <path d="M12 0L14.5 9.5L24 12L14.5 14.5L12 24L9.5 14.5L0 12L9.5 9.5L12 0Z" />
+  </svg>
+);

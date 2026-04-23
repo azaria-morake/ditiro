@@ -44,29 +44,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
     const completedSubs = subtasks?.filter(s => s.completed).length || 0;
     const totalSubs = subtasks?.length || 0;
 
-    const handleToggleSubtask = async (id: string, currentlyCompleted: boolean) => {
-        await db.subtasks.update(id, { completed: !currentlyCompleted });
-    };
-
-    const handleToggleParentTask = async () => {
-        const newStatus = task.status === 'completed' ? 'active' : 'completed';
-        await db.tasks.update(taskId, { status: newStatus });
-        
-        if (newStatus === 'completed' && subtasks) {
-             const subIds = subtasks.filter(s => !s.completed).map(s => s.id);
-             for(let sid of subIds) {
-                 await db.subtasks.update(sid, { completed: true });
-             }
-        }
-    };
-
-    const handleSaveDelay = async (subtaskId: string, oldDate?: string) => {
-        await db.subtasks.update(subtaskId, { 
-            dueDate: newTargetDate || undefined, 
-            dueTime: newTargetTime || undefined 
-        });
-        setEditingSubtask(null);
-        
+    const triggerContextualSnackbar = async (field: string, oldVal: string, newVal: string) => {
         try {
             const res = await fetch("/api/contextual-snackbar", {
                 method: "POST",
@@ -74,9 +52,9 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                 body: JSON.stringify({
                     taskTitle: task.title,
                     taskContext: originChat?.title || "general",
-                    changedField: "dueDate",
-                    oldValue: oldDate || "none",
-                    newValue: `${newTargetDate} ${newTargetTime}`
+                    changedField: field,
+                    oldValue: oldVal,
+                    newValue: newVal
                 })
             });
             if(res.ok) {
@@ -90,34 +68,46 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
         }
     };
 
+    const handleToggleSubtask = async (id: string, currentlyCompleted: boolean) => {
+        const sub = subtasks?.find(s => s.id === id);
+        await db.subtasks.update(id, { completed: !currentlyCompleted });
+        
+        if (!currentlyCompleted) {
+            triggerContextualSnackbar("subtaskStatus", "active", "completed");
+        }
+    };
+
+    const handleToggleParentTask = async () => {
+        const newStatus = task.status === 'completed' ? 'active' : 'completed';
+        await db.tasks.update(taskId, { status: newStatus });
+        
+        if (newStatus === 'completed') {
+            triggerContextualSnackbar("status", "active", "completed");
+            if (subtasks) {
+                const subIds = subtasks.filter(s => !s.completed).map(s => s.id);
+                for(let sid of subIds) {
+                    await db.subtasks.update(sid, { completed: true });
+                }
+            }
+        }
+    };
+
+    const handleSaveDelay = async (subtaskId: string, oldDate?: string) => {
+        await db.subtasks.update(subtaskId, { 
+            dueDate: newTargetDate || undefined, 
+            dueTime: newTargetTime || undefined 
+        });
+        setEditingSubtask(null);
+        triggerContextualSnackbar("dueDate", oldDate || "none", `${newTargetDate} ${newTargetTime}`);
+    };
+
     const handleSaveParentDelay = async (oldDate?: string, oldTime?: string) => {
         await db.tasks.update(taskId, {
             dueDate: parentTargetDate || undefined,
             dueTime: parentTargetTime || undefined
         });
         setEditingParent(false);
-        
-        try {
-            const res = await fetch("/api/contextual-snackbar", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    taskTitle: task.title,
-                    taskContext: originChat?.title || "general",
-                    changedField: "dueDate",
-                    oldValue: `${oldDate} ${oldTime}`,
-                    newValue: `${parentTargetDate} ${parentTargetTime}`
-                })
-            });
-            if(res.ok) {
-                const data = await res.json();
-                setSnackbarMsg(data.snackbarMessage);
-            } else {
-                setSnackbarMsg("Task details rescheduled.");
-            }
-        } catch(e) {
-            setSnackbarMsg("Task details updated.");
-        }
+        triggerContextualSnackbar("dueDate", `${oldDate} ${oldTime}`, `${parentTargetDate} ${parentTargetTime}`);
     };
 
     const handleAddManualSubtask = async () => {
@@ -132,6 +122,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
             order: newOrder
         });
         setNewSubtaskText("");
+        triggerContextualSnackbar("subtaskAdded", "none", newSubtaskText.trim());
     };
 
     return (
