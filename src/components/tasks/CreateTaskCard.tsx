@@ -4,6 +4,7 @@ import { db } from "@/lib/dexie";
 import { Check, Clock, X, MapPin, Plus, Trash2, Save } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface CreateTaskCardProps {
     onClose: () => void;
@@ -12,6 +13,7 @@ interface CreateTaskCardProps {
 
 export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCardProps) {
     const router = useRouter();
+    const { user } = useAuth();
     const todayStr = new Date().toISOString().split('T')[0];
 
     const [title, setTitle] = useState("");
@@ -55,7 +57,7 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
                 location: location || undefined,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                userId: null
+                userId: user?.uid || ""
             });
 
             const validSubtasks = subtasks.map(s => s.trim()).filter(Boolean);
@@ -65,7 +67,8 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
                     taskId,
                     text: st,
                     completed: false,
-                    order: idx
+                    order: idx,
+                    userId: user?.uid || ""
                 }));
                 await db.subtasks.bulkAdd(subs);
             }

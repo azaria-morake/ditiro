@@ -7,7 +7,7 @@ export interface Chat {
   timeIndicator: string;
   createdAt: number;
   updatedAt: number;
-  userId: string | null;
+  userId: string;
 }
 
 export interface Message {
@@ -28,6 +28,8 @@ export interface Message {
     rejectedIndices?: number[];
   };
   timestamp: number;
+  updatedAt?: number;
+  userId: string;
 }
 
 export interface Task {
@@ -42,7 +44,7 @@ export interface Task {
   location?: string;
   createdAt: number;
   updatedAt: number;
-  userId: string | null;
+  userId: string;
 }
 
 export interface Subtask {
@@ -53,6 +55,7 @@ export interface Subtask {
   dueDate?: string;
   dueTime?: string;
   order: number;
+  userId: string;
 }
 
 export class DitiroDatabase extends Dexie {
@@ -63,11 +66,11 @@ export class DitiroDatabase extends Dexie {
 
   constructor() {
     super('DitiroDB');
-    this.version(1).stores({
+    this.version(2).stores({
       chats: 'id, userId, updatedAt',
-      messages: 'id, chatId, timestamp',
+      messages: 'id, chatId, userId, timestamp, updatedAt',
       tasks: 'id, chatId, userId, status',
-      subtasks: 'id, taskId, completed'
+      subtasks: 'id, taskId, userId, completed'
     });
   }
 }

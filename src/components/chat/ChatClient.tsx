@@ -11,6 +11,22 @@ import clsx from "clsx";
 import TaskCard from "@/components/tasks/TaskCard";
 import CreateTaskCard from "@/components/tasks/CreateTaskCard";
 import { DitiroIcon } from "../brand/Logos";
+import { useAuth } from "@/components/auth/AuthProvider";
+
+// Generate a deterministic stable ID for a task based on its identity
+export const hashTaskIdentity = (title: string, date?: string | null, chatId?: string | null) => {
+    const cleanTitle = title.trim().toLowerCase();
+    const cleanDate = date?.split(' ')[0] || 'nodate'; // Just the date part
+    const cleanChat = chatId || 'none';
+    const raw = `${cleanTitle}|${cleanDate}`; // Global per user? No, per chat is safer for context
+    // Simple hash for readability in DB
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0;
+    }
+    return `t-${Math.abs(hash).toString(36)}-${cleanChat.slice(0, 4)}`;
+};
 
 export default function ChatClient() {
     const searchParams = useSearchParams();
@@ -19,8 +35,10 @@ export default function ChatClient() {
     const tParam = searchParams?.get('t');
     
     const { activeChatId, setActiveChatId } = useAppStore();
+    const { user } = useAuth();
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const isAcceptingRef = useRef(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const nParam = searchParams?.get('n');
@@ -37,6 +55,46 @@ export default function ChatClient() {
         () => currentChatId ? db.messages.where('chatId').equals(currentChatId).sortBy('timestamp') : Promise.resolve([] as Message[]),
         [currentChatId]
     );
+
+    const allTasks = useLiveQuery(() => db.tasks.toArray());
+
+    useEffect(() => {
+        if (!messages || !allTasks || isAcceptingRef.current) return;
+        
+        const reconcile = async () => {
+            for (const msg of messages) {
+                if (msg.type === 'proposal' && msg.proposalData && msg.proposalData.tasks) {
+                    const tasks = msg.proposalData.tasks;
+                    const alreadyAccepted = msg.proposalData.acceptedIndices || [];
+                    const nextAccepted = [...alreadyAccepted];
+                    let changed = false;
+
+                    tasks.forEach((pt, idx) => {
+                        if (nextAccepted.includes(idx)) return;
+                        
+                        const stableId = pt.id || hashTaskIdentity(pt.title, pt.dateTime, currentChatId);
+                        const match = allTasks.find(t => t.id === stableId || t.title.trim().toLowerCase() === pt.title.trim().toLowerCase());
+                        
+                        if (match) {
+                            nextAccepted.push(idx);
+                            changed = true;
+                        }
+                    });
+
+                    if (changed) {
+                        await db.messages.update(msg.id, {
+                            proposalData: {
+                                ...msg.proposalData,
+                                acceptedIndices: nextAccepted
+                            },
+                            updatedAt: Date.now()
+                        });
+                    }
+                }
+            }
+        };
+        reconcile();
+    }, [messages, allTasks]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -63,7 +121,7 @@ export default function ChatClient() {
                 timeIndicator: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                userId: null
+                userId: user?.uid || ""
             });
             setActiveChatId(cId);
             router.push(`/?c=${cId}`);
@@ -76,7 +134,9 @@ export default function ChatClient() {
                 role: 'user',
                 content: text,
                 type: 'text',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                updatedAt: Date.now(),
+                userId: user?.uid || ""
             };
             await db.messages.add(userMsg);
         }
@@ -116,15 +176,35 @@ export default function ChatClient() {
             const data = await res.json();
             
             const isProposal = !!data.proposal;
+            const msgId = crypto.randomUUID();
+            
+            // Assign deterministic Stable IDs to proposed tasks and pre-match existing
+            if (isProposal && data.proposal.tasks) {
+                const currentTasks = await db.tasks.toArray();
+                const initialAccepted: number[] = data.proposal.acceptedIndices || [];
+                
+                data.proposal.tasks = data.proposal.tasks.map((t: any, idx: number) => {
+                    const stableId = t.id || hashTaskIdentity(t.title, t.dateTime, cId);
+                    // If task already exists by ID or title, mark as accepted immediately
+                    const exists = currentTasks.find(ct => ct.id === stableId || ct.title.trim().toLowerCase() === t.title.trim().toLowerCase());
+                    if (exists && !initialAccepted.includes(idx)) {
+                        initialAccepted.push(idx);
+                    }
+                    return { ...t, id: stableId };
+                });
+                data.proposal.acceptedIndices = initialAccepted;
+            }
             
             const assistMsg: Message = {
-                id: crypto.randomUUID(),
+                id: msgId,
                 chatId: cId,
                 role: 'assistant',
                 content: data.reply,
                 type: isProposal ? 'proposal' : 'text',
                 proposalData: data.proposal,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                updatedAt: Date.now(),
+                userId: user?.uid || ""
             };
             
             await db.messages.add(assistMsg);
@@ -137,7 +217,9 @@ export default function ChatClient() {
                 role: 'assistant',
                 content: error.message && error.message !== "API failed" ? error.message : "I'm having trouble connecting to my brain right now! (Network/Server Error). Give me a moment and try again 😊",
                 type: 'text',
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                updatedAt: Date.now(),
+                userId: user?.uid || ""
             };
             await db.messages.add(errorMsg);
             await db.chats.update(cId, { updatedAt: Date.now() });
@@ -177,53 +259,59 @@ export default function ChatClient() {
     };
 
     const handleAcceptProposal = async (tasks: TaskProposal[], msgId: string) => {
-        if(!currentChatId) return;
-        console.log("Accepting tasks:", tasks);
+        if(!currentChatId || isAcceptingRef.current) return;
+        isAcceptingRef.current = true;
+        console.log("[ChatClient] Accepting tasks:", tasks);
         
         try {
-            for (const pt of tasks) {
-                const isUpdate = !!pt.id;
-                const taskId = pt.id || crypto.randomUUID();
-                
-                const taskData = {
-                    id: taskId,
-                    chatId: currentChatId,
-                    title: pt.title,
-                    status: 'active' as const,
-                    dueDate: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[0] : pt.dateTime?.split('T')[0] || undefined,
-                    dueTime: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[1] : pt.dateTime?.split('T')[1]?.substring(0, 5) || undefined,
-                    location: pt.location || undefined,
-                    updatedAt: Date.now(),
-                    userId: null
-                };
+            await db.transaction('rw', [db.tasks, db.subtasks], async () => {
+                for (const pt of tasks) {
+                    const taskId = pt.id;
+                    if (!taskId) continue; // Should not happen with stable IDs
+                    
+                    const taskData = {
+                        id: taskId,
+                        chatId: currentChatId,
+                        title: pt.title,
+                        status: 'active' as const,
+                        dueDate: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[0] : pt.dateTime?.split('T')[0] || undefined,
+                        dueTime: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[1] : pt.dateTime?.split('T')[1]?.substring(0, 5) || undefined,
+                        location: pt.location || undefined,
+                        updatedAt: Date.now(),
+                        userId: user?.uid || ""
+                    };
 
-                const existingTask = await db.tasks.get(taskId);
+                    const existingTask = await db.tasks.get(taskId);
+                    if (existingTask) {
+                        await db.tasks.update(taskId, taskData);
+                        await db.subtasks.where('taskId').equals(taskId).delete();
+                    } else {
+                        await db.tasks.add({ ...taskData, createdAt: Date.now() });
+                    }
 
-                if (existingTask) {
-                    await db.tasks.update(taskId, taskData);
-                    await db.subtasks.where('taskId').equals(taskId).delete();
-                } else {
-                    await db.tasks.add({ ...taskData, createdAt: Date.now() });
+                    if (pt.subtasks && pt.subtasks.length > 0) {
+                        const subs = pt.subtasks.map((st, idx) => ({
+                            id: crypto.randomUUID(),
+                            taskId,
+                            text: st,
+                            completed: false,
+                            order: idx,
+                            userId: user?.uid || ""
+                        }));
+                        await db.subtasks.bulkAdd(subs);
+                    }
                 }
-
-                if (pt.subtasks && pt.subtasks.length > 0) {
-                    const subs = pt.subtasks.map((st, idx) => ({
-                        id: crypto.randomUUID(),
-                        taskId,
-                        text: st,
-                        completed: false,
-                        order: idx
-                    }));
-                    await db.subtasks.bulkAdd(subs);
-                }
-            }
+            });
         } catch (err) {
             console.error("Failed to persist tasks:", err);
             alert("Failed to save tasks to database. Please try again.");
+        } finally {
+            isAcceptingRef.current = false;
         }
     };
 
     const handleProposalStateChange = async (msgId: string, accepted: number[], rejected: number[], updatedTasks: TaskProposal[]) => {
+        console.log("[ChatClient] Updating proposal state for message:", msgId, "Accepted:", accepted);
         const msg = await db.messages.get(msgId);
         if (msg && msg.proposalData) {
             await db.messages.update(msgId, {
@@ -232,8 +320,10 @@ export default function ChatClient() {
                     tasks: updatedTasks,
                     acceptedIndices: accepted,
                     rejectedIndices: rejected
-                }
+                },
+                updatedAt: Date.now()
             });
+            console.log("[ChatClient] Proposal state updated in Dexie.");
         }
     };
 

@@ -1,18 +1,36 @@
 "use client";
 
 import { useAppStore } from "@/store";
-import { MessageSquare, CheckSquare, X, Trash2 } from "lucide-react";
+import { MessageSquare, CheckSquare, X, Trash2, LogOut } from "lucide-react";
 import clsx from "clsx";
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/dexie";
 import { useRouter } from "next/navigation";
 import { DitiroBanner } from "../brand/Logos";
+import { auth } from "@/lib/firebase";
 
 export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen, activeChatId, setActiveChatId } = useAppStore();
   const [activeTab, setActiveTab] = useState<'chats' | 'tasks'>('chats');
   const router = useRouter();
+
+  const handleLogout = async () => {
+    if (confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem('ditiro_guest');
+      await auth.signOut();
+      
+      // Clear local database for privacy
+      await Promise.all([
+        db.chats.clear(),
+        db.messages.clear(),
+        db.tasks.clear(),
+        db.subtasks.clear()
+      ]);
+
+      router.push('/login');
+    }
+  };
 
   // Swipe gesture state
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -169,6 +187,17 @@ export default function Sidebar() {
               {tasks?.length === 0 && <div className="text-center text-neutral-500 text-sm mt-4">No active tasks</div>}
             </>
           )}
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-neutral-800">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 p-3 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors text-sm font-medium"
+          >
+            <LogOut size={18} className="rotate-180" />
+            Logout
+          </button>
         </div>
       </aside>
     </>

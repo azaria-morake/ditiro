@@ -63,20 +63,25 @@ export async function generateLLMResponse(
     return response.choices[0]?.message?.content || "";
   } catch (error: any) {
     // Fallback to Gemini on Rate Limit (429)
-    if (error?.status === 429 || error?.code === "rate_limit_exceeded") {
-      console.warn("Groq Rate Limit Reached. Falling back to Gemini...");
+    if (error?.status === 429 || error?.code === "rate_limit_exceeded" || error?.message?.includes("429")) {
+      console.warn(`[LLM] Groq Rate Limit Reached (${error?.status || error?.code}). Falling back to Gemini...`);
       try {
         return await generateGeminiResponse(messages, options);
       } catch (geminiError: any) {
-        console.error("Gemini Fallback Error:", geminiError);
-        if (geminiError?.status === 429 || geminiError?.message?.includes("429")) {
+        console.error("[LLM] Gemini Fallback Error:", geminiError);
+        // Include variety of 429 detection for Gemini SDK
+        const is429 = geminiError?.status === 429 || 
+                     geminiError?.message?.includes("429") || 
+                     geminiError?.errorDetails?.some((d: any) => d.reason === "QUOTA_EXCEEDED");
+        
+        if (is429) {
           throw new Error("DOUBLE_QUOTA_EXHAUSTION");
         }
         throw geminiError;
       }
     }
     
-    console.error("Groq API Error:", error);
+    console.error(`[LLM] Groq API Error (${error?.status}):`, error);
     throw error;
   }
 }

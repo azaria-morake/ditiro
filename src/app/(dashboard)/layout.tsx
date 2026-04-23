@@ -1,11 +1,39 @@
+"use client";
+
+import React, { useEffect } from 'react';
 import Sidebar from '@/components/sidebar/Sidebar';
 import { MenuButton } from '@/components/sidebar/MenuButton';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, loading, isGuest } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user && !isGuest) {
+      // Add a small delay for mobile session restoration
+      const timeout = setTimeout(() => {
+        router.push('/login');
+      }, 800);
+      return () => clearTimeout(timeout);
+    }
+  }, [user, loading, isGuest, router]);
+
+  if (loading) {
+    return <div className="h-screen w-full bg-neutral-950" />;
+  }
+
+  // If not loading, and not authenticated/guest, we'll be redirected by the useEffect.
+  // We still check here to prevent flashing content.
+  if (!user && !isGuest) {
+    return <div className="h-screen w-full bg-neutral-950" />;
+  }
+
   return (
     <div className="flex h-[100dvh] w-full overflow-hidden relative">
       <Sidebar />

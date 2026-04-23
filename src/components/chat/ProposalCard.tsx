@@ -30,9 +30,9 @@ export default function ProposalCard({
   onStateChange
 }: ProposalCardProps) {
   // Ensure every task has a stable ID for linking
-  const tasksWithIds = useMemo(() => tasks.map(t => ({
+  const tasksWithIds = useMemo(() => tasks.map((t, i) => ({
     ...t,
-    id: t.id || crypto.randomUUID()
+    id: t.id || `fallback-${t.title}-${i}`
   })), [tasks]);
 
   const [acceptedIndices, setAcceptedIndices] = useState<number[]>(initialAcceptedIndices);

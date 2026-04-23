@@ -6,6 +6,8 @@ import { Check, Clock, X, ChevronRight, MessageSquare, Plus } from "lucide-react
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useAppStore } from "@/store";
 
 interface TaskCardProps {
     taskId: string;
@@ -14,6 +16,7 @@ interface TaskCardProps {
 
 export default function TaskCard({ taskId, onClose }: TaskCardProps) {
     const router = useRouter();
+    const { user } = useAuth();
     const task = useLiveQuery(() => db.tasks.get(taskId), [taskId]);
     const subtasks = useLiveQuery(() => db.subtasks.where('taskId').equals(taskId).sortBy('order'), [taskId]);
     const originChat = useLiveQuery(() => task?.chatId ? db.chats.get(task.chatId) : undefined, [task?.chatId]);
@@ -119,7 +122,8 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
             taskId,
             text: newSubtaskText.trim(),
             completed: false,
-            order: newOrder
+            order: newOrder,
+            userId: user?.uid || ""
         });
         setNewSubtaskText("");
         triggerContextualSnackbar("subtaskAdded", "none", newSubtaskText.trim());
