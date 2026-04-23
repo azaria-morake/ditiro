@@ -18,11 +18,14 @@ export interface Message {
   type: 'text' | 'proposal';
   proposalData?: {
     tasks: Array<{
+      id?: string;
       title: string;
       dateTime?: string;
       location?: string;
       subtasks?: string[];
     }>;
+    acceptedIndices?: number[];
+    rejectedIndices?: number[];
   };
   timestamp: number;
 }

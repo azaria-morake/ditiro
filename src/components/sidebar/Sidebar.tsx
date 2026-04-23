@@ -13,8 +13,8 @@ export default function Sidebar() {
   const [activeTab, setActiveTab] = useState<'chats' | 'tasks'>('chats');
   const router = useRouter();
 
-  const chats = useLiveQuery(() => db.chats.orderBy('updatedAt').reverse().toArray());
-  const tasks = useLiveQuery(() => db.tasks.toArray());
+  const chats = useLiveQuery(() => db.chats.toArray().then(arr => arr.sort((a,b) => b.updatedAt - a.updatedAt)));
+  const tasks = useLiveQuery(() => db.tasks.toArray().then(arr => arr.sort((a,b) => b.updatedAt - a.updatedAt)));
 
   const handleDeleteChat = async (id: string) => {
     if (confirm("Delete this chat and all its tasks?")) {
@@ -86,15 +86,15 @@ export default function Sidebar() {
             <>
               <button 
                 onClick={() => { setActiveChatId(null); router.push('/'); setSidebarOpen(false); }}
-                className="w-full text-left p-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors font-medium mb-2 text-sm"
+                className="w-full text-center p-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition-colors font-medium mb-2 text-sm"
               >
                 + New Conversation
               </button>
               
               {chats?.map(chat => (
                 <div key={chat.id} className={clsx(
-                    "group flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800 transition-colors cursor-pointer text-sm",
-                    activeChatId === chat.id ? "bg-neutral-800 border-l-2 border-emerald-500" : ""
+                    "group flex items-center justify-between p-3 flex-shrink-0 rounded-lg border transition-colors cursor-pointer text-sm mb-1",
+                    activeChatId === chat.id ? "bg-neutral-800 border-emerald-500" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
                 )} onClick={() => { setActiveChatId(chat.id); router.push('/?c=' + chat.id); setSidebarOpen(false); }}>
                   <div className="truncate pr-2 w-full flex items-center">
                       <span className="mr-2 text-lg">{chat.emoji || '💬'}</span>
@@ -113,7 +113,7 @@ export default function Sidebar() {
           {activeTab === 'tasks' && (
             <>
               {tasks?.map(task => (
-                 <div key={task.id} className="group flex items-start justify-between p-3 rounded-lg hover:bg-neutral-800 transition-colors text-sm border border-transparent hover:border-neutral-700 cursor-pointer"
+                 <div key={task.id} className="group flex items-start justify-between p-3 flex-shrink-0 rounded-lg bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800 transition-colors text-sm mb-1 cursor-pointer"
                       onClick={() => { router.push('/?t=' + task.id); setSidebarOpen(false); }}>
                  <div className="overflow-hidden">
                      <div className="font-medium truncate">{task.title}</div>

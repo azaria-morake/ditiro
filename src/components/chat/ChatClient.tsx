@@ -2,7 +2,7 @@
 
 import { useAppStore } from "@/store";
 import { useEffect, useState, useRef } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, RotateCcw } from "lucide-react";
 import { db, Message } from "@/lib/dexie";
 import { useLiveQuery } from "dexie-react-hooks";
 import ProposalCard, { TaskProposal } from "./ProposalCard";
@@ -38,12 +38,8 @@ export default function ChatClient() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = async (e?: React.FormEvent) => {
-        if(e) e.preventDefault();
-        if(!input.trim() || isLoading) return;
-
-        const text = input.trim();
-        setInput("");
+    const executeMessage = async (text: string, isRetry = false) => {
+        if(!text.trim() || isLoading) return;
         setIsLoading(true);
 
         let cId = currentChatId;
@@ -63,26 +59,43 @@ export default function ChatClient() {
             router.push(`/?c=${cId}`);
         }
 
-        const userMsg: Message = {
-            id: crypto.randomUUID(),
-            chatId: cId,
-            role: 'user',
-            content: text,
-            type: 'text',
-            timestamp: Date.now()
-        };
-        await db.messages.add(userMsg);
+        if (!isRetry) {
+            const userMsg: Message = {
+                id: crypto.randomUUID(),
+                chatId: cId,
+                role: 'user',
+                content: text,
+                type: 'text',
+                timestamp: Date.now()
+            };
+            await db.messages.add(userMsg);
+        }
         await db.chats.update(cId, { updatedAt: Date.now() });
 
         try {
             const history = messages?.map(m => ({ role: m.role, content: m.content })) || [];
-            const res = await fetch('/api/gemini/chat', {
+            
+            const currentTasks = await db.tasks.where('chatId').equals(cId).toArray();
+            const taskIds = currentTasks.map(t => t.id);
+            const currentSubtasks = taskIds.length > 0 ? await db.subtasks.where('taskId').anyOf(taskIds).toArray() : [];
+            
+            const taskContext = currentTasks.map(t => ({
+                id: t.id,
+                title: t.title,
+                status: t.status,
+                dueDate: t.dueDate,
+                dueTime: t.dueTime,
+                subtasks: currentSubtasks.filter(s => s.taskId === t.id).map(s => ({ text: s.text, completed: s.completed, dueDate: s.dueDate, dueTime: s.dueTime }))
+            }));
+
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     chatId: cId,
                     history,
-                    newMessage: text
+                    newMessage: text,
+                    taskContext
                 })
             });
 
@@ -105,39 +118,103 @@ export default function ChatClient() {
             await db.chats.update(cId, { updatedAt: Date.now() });
         } catch (error) {
             console.error("Failed to send message", error);
+            const errorMsg: Message = {
+                id: crypto.randomUUID(),
+                chatId: cId,
+                role: 'assistant',
+                content: "I'm having trouble connecting to my brain right now! (Network/Server Error). Give me a moment and try again 😊",
+                type: 'text',
+                timestamp: Date.now()
+            };
+            await db.messages.add(errorMsg);
+            await db.chats.update(cId, { updatedAt: Date.now() });
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handleSend = async (e?: React.FormEvent) => {
+        if(e) e.preventDefault();
+        const text = input.trim();
+        if(!text) return;
+        setInput("");
+        await executeMessage(text);
+    };
+
+    const handleRetry = async () => {
+        if (!messages || messages.length === 0 || isLoading) return;
+        
+        const userMsgs = messages.filter(m => m.role === 'user');
+        if (userMsgs.length === 0) return;
+        
+        const lastUserText = userMsgs[userMsgs.length - 1].content;
+        
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg.role === 'assistant' && lastMsg.content.includes("trouble connecting")) {
+            await db.messages.delete(lastMsg.id);
+        }
+
+        await executeMessage(lastUserText, true);
+    };
+
     const handleAcceptProposal = async (tasks: TaskProposal[], msgId: string) => {
         if(!currentChatId) return;
+        console.log("Accepting tasks:", tasks);
         
-        for (const pt of tasks) {
-            const taskId = crypto.randomUUID();
-            await db.tasks.add({
-                id: taskId,
-                chatId: currentChatId,
-                title: pt.title,
-                status: 'active',
-                dueDate: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[0] : pt.dateTime?.split('T')[0] || undefined,
-                dueTime: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[1] : pt.dateTime?.split('T')[1]?.substring(0, 5) || undefined,
-                location: pt.location || undefined,
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
-                userId: null
-            });
+        try {
+            for (const pt of tasks) {
+                const isUpdate = !!pt.id;
+                const taskId = pt.id || crypto.randomUUID();
+                
+                const taskData = {
+                    id: taskId,
+                    chatId: currentChatId,
+                    title: pt.title,
+                    status: 'active' as const,
+                    dueDate: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[0] : pt.dateTime?.split('T')[0] || undefined,
+                    dueTime: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[1] : pt.dateTime?.split('T')[1]?.substring(0, 5) || undefined,
+                    location: pt.location || undefined,
+                    updatedAt: Date.now(),
+                    userId: null
+                };
 
-            if (pt.subtasks && pt.subtasks.length > 0) {
-                const subs = pt.subtasks.map((st, idx) => ({
-                    id: crypto.randomUUID(),
-                    taskId,
-                    text: st,
-                    completed: false,
-                    order: idx
-                }));
-                await db.subtasks.bulkAdd(subs);
+                const existingTask = await db.tasks.get(taskId);
+
+                if (existingTask) {
+                    await db.tasks.update(taskId, taskData);
+                    await db.subtasks.where('taskId').equals(taskId).delete();
+                } else {
+                    await db.tasks.add({ ...taskData, createdAt: Date.now() });
+                }
+
+                if (pt.subtasks && pt.subtasks.length > 0) {
+                    const subs = pt.subtasks.map((st, idx) => ({
+                        id: crypto.randomUUID(),
+                        taskId,
+                        text: st,
+                        completed: false,
+                        order: idx
+                    }));
+                    await db.subtasks.bulkAdd(subs);
+                }
             }
+        } catch (err) {
+            console.error("Failed to persist tasks:", err);
+            alert("Failed to save tasks to database. Please try again.");
+        }
+    };
+
+    const handleProposalStateChange = async (msgId: string, accepted: number[], rejected: number[], updatedTasks: TaskProposal[]) => {
+        const msg = await db.messages.get(msgId);
+        if (msg && msg.proposalData) {
+            await db.messages.update(msgId, {
+                proposalData: {
+                    ...msg.proposalData,
+                    tasks: updatedTasks,
+                    acceptedIndices: accepted,
+                    rejectedIndices: rejected
+                }
+            });
         }
     };
 
@@ -153,22 +230,39 @@ export default function ChatClient() {
                 ) : (
                     messages?.map(msg => (
                         <div key={msg.id} className={clsx(
-                            "flex w-full",
+                            "flex w-full group",
                             msg.role === 'user' ? "justify-end" : "justify-start"
                         )}>
-                            <div className={clsx(
-                                "max-w-[90%] sm:max-w-[75%] text-sm rounded-2xl px-5 py-3 leading-relaxed",
-                                msg.role === 'user' ? "bg-neutral-800 text-neutral-100 rounded-br-sm" : "bg-transparent text-neutral-200 px-1"
-                            )}>
-                                {msg.content}
-                                {msg.type === 'proposal' && msg.proposalData && (
-                                    <div className="mt-4 w-full">
-                                        <ProposalCard 
-                                            tasks={msg.proposalData.tasks} 
-                                            onAccept={(tasks) => handleAcceptProposal(tasks, msg.id)}
-                                            onRejectAll={() => {}}
-                                        />
-                                    </div>
+                            <div className="flex flex-col max-w-[90%] sm:max-w-[75%]">
+                                <div className={clsx(
+                                    "text-sm rounded-2xl px-5 py-3 leading-relaxed",
+                                    msg.role === 'user' ? "bg-neutral-800 text-neutral-100 rounded-br-sm ml-auto" : "bg-neutral-900/50 border border-neutral-800 text-neutral-200"
+                                )}>
+                                    {msg.content}
+                                    {msg.type === 'proposal' && msg.proposalData && (
+                                        <div className="mt-4 w-full">
+                                            <ProposalCard 
+                                                tasks={msg.proposalData.tasks} 
+                                                onAccept={(tasks) => handleAcceptProposal(tasks, msg.id)}
+                                                onRejectAll={() => handleProposalStateChange(msg.id, msg.proposalData?.acceptedIndices || [], msg.proposalData?.tasks.map((_, i) => i) || [], msg.proposalData?.tasks || [])}
+                                                onOpenTask={(id) => router.push(currentChatId ? `/?c=${currentChatId}&t=${id}` : `/?t=${id}`)}
+                                                initialAcceptedIndices={msg.proposalData.acceptedIndices}
+                                                initialRejectedIndices={msg.proposalData.rejectedIndices}
+                                                onStateChange={(acc, rej, tasks) => handleProposalStateChange(msg.id, acc, rej, tasks)}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                                {msg.role === 'assistant' && msg === messages[messages.length - 1] && !isLoading && (
+                                    <button 
+                                        onClick={handleRetry}
+                                        className={clsx(
+                                            "mt-2 ml-1 w-max flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold transition-colors py-1 px-2 rounded-md hover:bg-neutral-800",
+                                            msg.content.includes("trouble connecting") ? "text-amber-500 hover:text-amber-400" : "text-neutral-500 hover:text-neutral-300"
+                                        )}
+                                    >
+                                        <RotateCcw size={12} /> Retry last query
+                                    </button>
                                 )}
                             </div>
                         </div>

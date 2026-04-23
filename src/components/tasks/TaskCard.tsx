@@ -21,8 +21,14 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
     const [snackbarMsg, setSnackbarMsg] = useState("");
     
     const [editingSubtask, setEditingSubtask] = useState<string | null>(null);
+    const [editingParent, setEditingParent] = useState(false);
+    
     const [newTargetDate, setNewTargetDate] = useState("");
     const [newTargetTime, setNewTargetTime] = useState("");
+    const [parentTargetDate, setParentTargetDate] = useState("");
+    const [parentTargetTime, setParentTargetTime] = useState("");
+    
+    const todayStr = new Date().toISOString().split('T')[0];
 
     useEffect(() => {
         if(snackbarMsg) {
@@ -40,6 +46,18 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
         await db.subtasks.update(id, { completed: !currentlyCompleted });
     };
 
+    const handleToggleParentTask = async () => {
+        const newStatus = task.status === 'completed' ? 'active' : 'completed';
+        await db.tasks.update(taskId, { status: newStatus });
+        
+        if (newStatus === 'completed' && subtasks) {
+             const subIds = subtasks.filter(s => !s.completed).map(s => s.id);
+             for(let sid of subIds) {
+                 await db.subtasks.update(sid, { completed: true });
+             }
+        }
+    };
+
     const handleSaveDelay = async (subtaskId: string, oldDate?: string) => {
         await db.subtasks.update(subtaskId, { 
             dueDate: newTargetDate || undefined, 
@@ -48,7 +66,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
         setEditingSubtask(null);
         
         try {
-            const res = await fetch("/api/gemini/contextual-snackbar", {
+            const res = await fetch("/api/contextual-snackbar", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -62,9 +80,41 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
             if(res.ok) {
                 const data = await res.json();
                 setSnackbarMsg(data.snackbarMessage);
+            } else {
+                setSnackbarMsg("Task updated.");
             }
         } catch(e) {
             setSnackbarMsg("Task updated.");
+        }
+    };
+
+    const handleSaveParentDelay = async (oldDate?: string, oldTime?: string) => {
+        await db.tasks.update(taskId, {
+            dueDate: parentTargetDate || undefined,
+            dueTime: parentTargetTime || undefined
+        });
+        setEditingParent(false);
+        
+        try {
+            const res = await fetch("/api/contextual-snackbar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    taskTitle: task.title,
+                    taskContext: originChat?.title || "general",
+                    changedField: "dueDate",
+                    oldValue: `${oldDate} ${oldTime}`,
+                    newValue: `${parentTargetDate} ${parentTargetTime}`
+                })
+            });
+            if(res.ok) {
+                const data = await res.json();
+                setSnackbarMsg(data.snackbarMessage);
+            } else {
+                setSnackbarMsg("Task details rescheduled.");
+            }
+        } catch(e) {
+            setSnackbarMsg("Task details updated.");
         }
     };
 
@@ -76,18 +126,58 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                     <button onClick={onClose} className="absolute right-4 top-4 p-1 rounded hover:bg-neutral-700 text-neutral-400 hover:text-white transition-colors">
                         <X size={20} />
                     </button>
-                    <div className="flex items-center gap-3 pr-8">
-                        <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center text-xl shrink-0">
-                            {originChat?.emoji || '📝'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <h2 className="text-lg font-bold text-neutral-100 truncate">{task.title}</h2>
-                            <p className="text-sm text-neutral-400">
-                                {totalSubs > 0 ? `${completedSubs}/${totalSubs} done` : "No subtasks"}
-                            </p>
+                    <div className="flex items-start gap-4 pr-10">
+                        <button onClick={handleToggleParentTask} 
+                                className={clsx(
+                                    "mt-1 w-6 h-6 rounded flex items-center justify-center border transition-colors shrink-0",
+                                    task.status === 'completed' ? "bg-emerald-500 border-emerald-500 text-neutral-900" : "border-neutral-500 hover:border-emerald-400"
+                                )}>
+                            {task.status === 'completed' && <Check size={16} strokeWidth={3} />}
+                        </button>
+                        <div className="flex-1 min-w-0 flex flex-col">
+                            <h2 className={clsx(
+                                "text-lg font-bold truncate transition-colors",
+                                task.status === 'completed' ? "text-neutral-500 line-through" : "text-neutral-100"
+                            )}>
+                                {task.title}
+                            </h2>
+                            <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-neutral-400">
+                                <div className="font-medium">
+                                    {totalSubs > 0 ? `${completedSubs}/${totalSubs} done` : "No subtasks"}
+                                </div>
+                                
+                                {task.dueDate && !editingParent && (
+                                    <div className="flex items-center gap-1 text-emerald-400 font-medium bg-emerald-400/10 px-2 py-0.5 rounded">
+                                        <Clock size={12} /> {task.dueDate} {task.dueTime}
+                                    </div>
+                                )}
+                                
+                                <button onClick={() => {
+                                    setEditingParent(!editingParent);
+                                    if(!editingParent) {
+                                        setParentTargetDate(task.dueDate || "");
+                                        setParentTargetTime(task.dueTime || "");
+                                    }
+                                }} className="flex items-center gap-1.5 text-neutral-400 hover:text-emerald-400 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-700 hover:border-emerald-500/50 transition-colors">
+                                    <Clock size={12} /> <span className="text-xs font-semibold">Reschedule</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                {editingParent && (
+                    <div className="bg-neutral-800 border-b border-neutral-700 p-3 px-4 flex flex-col gap-2 shrink-0 animate-in slide-in-from-top-2">
+                        <div className="text-xs text-neutral-400 font-medium mb-1">Reschedule {task.title}</div>
+                        <div className="flex gap-2">
+                            <input type="date" min={todayStr} value={parentTargetDate} onChange={e => setParentTargetDate(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
+                            <input type="time" value={parentTargetTime} onChange={e => setParentTargetTime(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
+                        </div>
+                        <button onClick={() => handleSaveParentDelay(task.dueDate, task.dueTime)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-2 text-xs font-semibold mt-1">
+                            Save Reschedule
+                        </button>
+                    </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-4 bg-neutral-900 flex flex-col gap-3 relative">
                     {subtasks?.map(sub => (
@@ -118,7 +208,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                             {editingSubtask === sub.id && (
                                 <div className="mt-2 pl-8 pr-2 flex flex-col gap-2 animate-in slide-in-from-top-2">
                                     <div className="flex gap-2">
-                                        <input type="date" value={newTargetDate} onChange={e => setNewTargetDate(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
+                                        <input type="date" min={todayStr} value={newTargetDate} onChange={e => setNewTargetDate(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
                                         <input type="time" value={newTargetTime} onChange={e => setNewTargetTime(e.target.value)} className="flex-1 bg-neutral-950 border border-neutral-700 rounded p-1.5 text-sm text-neutral-200 color-scheme-dark" />
                                     </div>
                                     <button onClick={() => handleSaveDelay(sub.id, sub.dueDate)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded py-1.5 text-xs font-semibold mt-1">
@@ -142,7 +232,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                 </div>
 
                 {snackbarMsg && (
-                    <div className="absolute bottom-20 left-4 right-4 bg-emerald-900 border border-emerald-700 text-emerald-100 p-3 rounded-lg text-sm shadow-xl flex items-start gap-2 z-10 animate-in slide-in-from-bottom-5">
+                    <div className="absolute bottom-20 w-max max-w-[90%] left-1/2 -translate-x-1/2 bg-emerald-900 border border-emerald-700 text-emerald-100 p-3 rounded-lg text-sm shadow-xl flex items-start gap-2 z-10 animate-in slide-in-from-bottom-5">
                         <span className="mt-0.5">💡</span>
                         <span>{snackbarMsg}</span>
                     </div>
