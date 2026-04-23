@@ -22,16 +22,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} flex h-screen w-full bg-neutral-950 text-neutral-50 overflow-hidden`}>
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 relative h-full">
-          <header className="h-16 flex items-center justify-between px-4 border-b border-neutral-800 md:hidden bg-neutral-900/50 backdrop-blur-md shrink-0">
-            <MenuButton />
-            <DitiroBanner className="h-6 w-32 text-[#e05012]" />
-          </header>
-          <main className="flex-1 overflow-hidden relative">
-            {children}
-          </main>
+      <body className={`${inter.className} bg-neutral-950 text-neutral-50 overflow-hidden`}>
+        <div className="flex h-screen w-full overflow-hidden relative">
+          <Sidebar />
+          <div className="absolute inset-0 md:static md:flex-1 flex flex-col min-w-0 h-full w-full">
+            <header className="h-16 flex items-center justify-between px-4 border-b border-neutral-800 md:hidden bg-neutral-900/50 backdrop-blur-md shrink-0">
+              <MenuButton />
+              <DitiroBanner className="h-6 w-32 text-[#e05012]" />
+            </header>
+            <main className="flex-1 overflow-hidden relative">
+              {children}
+            </main>
+          </div>
         </div>
       </body>
     </html>
