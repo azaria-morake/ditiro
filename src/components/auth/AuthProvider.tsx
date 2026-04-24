@@ -9,6 +9,8 @@ interface AuthContextType {
   loading: boolean;
   isGuest: boolean;
   setAsGuest: () => void;
+  logout: () => Promise<void>;
+  loginWithGoogle: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,6 +18,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isGuest: false,
   setAsGuest: () => {},
+  logout: async () => {},
+  loginWithGoogle: async () => null,
 });
 
 import { useSync } from '@/hooks/useSync';
@@ -48,8 +52,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsGuest(true);
   };
 
+  const logout = async () => {
+    localStorage.removeItem('ditiro_guest');
+    setIsGuest(false);
+    await auth.signOut();
+    setUser(null);
+  };
+
+  const loginWithGoogle = async () => {
+    const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result.user) {
+        localStorage.removeItem('ditiro_guest');
+        setIsGuest(false);
+      }
+      return result.user;
+    } catch (error) {
+      console.error("Google Sign-in failed in provider:", error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isGuest, setAsGuest }}>
+    <AuthContext.Provider value={{ user, loading, isGuest, setAsGuest, logout, loginWithGoogle }}>
       {!loading && <SyncManager />}
       {children}
     </AuthContext.Provider>

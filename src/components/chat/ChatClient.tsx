@@ -12,6 +12,7 @@ import TaskCard from "@/components/tasks/TaskCard";
 import CreateTaskCard from "@/components/tasks/CreateTaskCard";
 import { DitiroIcon } from "../brand/Logos";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 // Generate a deterministic stable ID for a task based on its identity
 export const hashTaskIdentity = (title: string, date?: string | null, chatId?: string | null) => {
@@ -29,6 +30,7 @@ export const hashTaskIdentity = (title: string, date?: string | null, chatId?: s
 };
 
 export default function ChatClient() {
+    const { showDialog } = useDialog();
     const searchParams = useSearchParams();
     const router = useRouter();
     const cParam = searchParams?.get('c');
@@ -101,7 +103,8 @@ export default function ChatClient() {
     }, [messages]);
 
     useEffect(() => {
-        if (!isLoading && inputRef.current) {
+        // Only auto-focus on desktop to prevent keyboard from popping up on mobile
+        if (!isLoading && inputRef.current && window.innerWidth > 768) {
             inputRef.current.focus();
         }
     }, [isLoading]);
@@ -304,7 +307,11 @@ export default function ChatClient() {
             });
         } catch (err) {
             console.error("Failed to persist tasks:", err);
-            alert("Failed to save tasks to database. Please try again.");
+            showDialog({
+                title: "Database Error",
+                message: "I had some trouble saving those tasks to your local database. Please try again in a moment.",
+                type: "alert"
+            });
         } finally {
             isAcceptingRef.current = false;
         }

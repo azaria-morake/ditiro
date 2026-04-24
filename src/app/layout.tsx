@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { DialogProvider } from '@/components/ui/DialogProvider';
+
 export default function RootLayout({
   children,
 }: {
@@ -22,7 +24,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} bg-neutral-950 text-neutral-50 overflow-hidden`}>
         <AuthProvider>
-          {children}
+          <DialogProvider>
+            {children}
+          </DialogProvider>
         </AuthProvider>
       </body>
     </html>

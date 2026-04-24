@@ -1,4 +1,4 @@
-import { Check, X as XIcon, ExternalLink } from "lucide-react";
+import { Check, X as XIcon, ExternalLink, MapPin, Clock } from "lucide-react";
 import { useState, useMemo } from "react";
 import clsx from "clsx";
 
@@ -94,21 +94,21 @@ export default function ProposalCard({
               onClick={() => task.id && onOpenTask?.(task.id)}
               className="flex items-center gap-3 p-3 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-800/80 cursor-pointer group transition-all"
             >
-              <div className="w-6 h-6 rounded-full bg-#e05012/20 text-#e05012 flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-full bg-[#e05012]/10 text-[#e05012] flex items-center justify-center shrink-0">
                 <Check size={14} strokeWidth={3} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-neutral-100 group-hover:text-#e05012 transition-colors truncate">
+                <div className="text-sm font-bold text-neutral-100 group-hover:text-[#e05012] transition-colors truncate">
                   {task.title}
                 </div>
                 {(task.dateTime || task.location) && (
-                  <div className="text-[10px] text-neutral-500 mt-0.5 flex gap-2">
-                    {task.dateTime && <span>📅 {task.dateTime}</span>}
-                    {task.location && <span>📍 {task.location}</span>}
+                  <div className="text-[10px] font-bold text-neutral-500 mt-1 flex gap-2">
+                    {task.dateTime && <span className="flex items-center gap-1"><Clock size={10} className="text-[#e05012]" /> {task.dateTime}</span>}
+                    {task.location && <span className="flex items-center gap-1"><MapPin size={10} className="text-[#e05012]" /> {task.location}</span>}
                   </div>
                 )}
               </div>
-              <ExternalLink size={14} className="text-neutral-700 group-hover:text-#e05012 transition-colors" />
+              <ExternalLink size={14} className="text-neutral-700 group-hover:text-[#e05012] transition-colors" />
             </div>
           ))}
         </div>

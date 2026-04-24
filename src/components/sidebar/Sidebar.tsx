@@ -9,26 +9,67 @@ import { db } from "@/lib/dexie";
 import { useRouter } from "next/navigation";
 import { DitiroBanner } from "../brand/Logos";
 import { auth } from "@/lib/firebase";
+import { useDialog } from "@/components/ui/DialogProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function Sidebar() {
   const { sidebarOpen, setSidebarOpen, activeChatId, setActiveChatId } = useAppStore();
+  const { showDialog } = useDialog();
+  const { user, isGuest, logout, loginWithGoogle } = useAuth();
   const [activeTab, setActiveTab] = useState<'chats' | 'tasks'>('chats');
   const router = useRouter();
 
   const handleLogout = async () => {
-    if (confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem('ditiro_guest');
-      await auth.signOut();
-      
-      // Clear local database for privacy
-      await Promise.all([
-        db.chats.clear(),
-        db.messages.clear(),
-        db.tasks.clear(),
-        db.subtasks.clear()
-      ]);
-
-      router.push('/login');
+    if (isGuest) {
+      showDialog({
+        title: "Don't lose your work!",
+        message: "You're currently a guest. If you log out now, your tasks and chats will be permanently cleared from this device. Connect your Google account to save them forever.",
+        confirmLabel: "Logout Anyway",
+        cancelLabel: "Cancel",
+        socialLabel: "Save with Google",
+        type: "confirm",
+        onSocialConfirm: async () => {
+          try {
+            await loginWithGoogle();
+            // AuthProvider handles state reset, no need to logout if they signed in
+          } catch(e) {
+            console.error("Sign in from logout failed", e);
+          }
+        },
+        onConfirm: async () => {
+          await logout();
+          await Promise.all([
+            db.chats.clear(),
+            db.messages.clear(),
+            db.tasks.clear(),
+            db.subtasks.clear()
+          ]);
+          router.push('/login');
+          // Force a reload to clear all cached state just in case
+          window.location.reload();
+        }
+      });
+    } else {
+      showDialog({
+        title: "Taking a break?",
+        message: "Are you sure you want to log out? Ditiro will be right here when you return.",
+        confirmLabel: "Logout",
+        cancelLabel: "Stay",
+        type: "confirm",
+        onConfirm: async () => {
+          await logout();
+          // No need to clear DB for signed in users as it's their private space 
+          // and they might want to re-login quickly. But actually, per policy:
+          await Promise.all([
+            db.chats.clear(),
+            db.messages.clear(),
+            db.tasks.clear(),
+            db.subtasks.clear()
+          ]);
+          router.push('/login');
+          window.location.reload();
+        }
+      });
     }
   };
 
@@ -59,25 +100,39 @@ export default function Sidebar() {
   const tasks = useLiveQuery(() => db.tasks.toArray().then(arr => arr.sort((a, b) => b.updatedAt - a.updatedAt)));
 
   const handleDeleteChat = async (id: string) => {
-    if (confirm("Delete this chat and all its tasks?")) {
-      await db.chats.delete(id);
-      await db.messages.where('chatId').equals(id).delete();
-      const chatTasks = await db.tasks.where('chatId').equals(id).toArray();
-      const taskIds = chatTasks.map(t => t.id);
-      await db.tasks.bulkDelete(taskIds);
-      await db.subtasks.where('taskId').anyOf(taskIds).delete();
-      if (activeChatId === id) {
-        setActiveChatId(null);
-        router.push('/');
+    showDialog({
+      title: "Delete Conversation?",
+      message: "This will permanently remove this chat and all its associated tasks. This action cannot be undone.",
+      confirmLabel: "Delete All",
+      cancelLabel: "Cancel",
+      type: "confirm",
+      onConfirm: async () => {
+        await db.chats.delete(id);
+        await db.messages.where('chatId').equals(id).delete();
+        const chatTasks = await db.tasks.where('chatId').equals(id).toArray();
+        const taskIds = chatTasks.map(t => t.id);
+        await db.tasks.bulkDelete(taskIds);
+        await db.subtasks.where('taskId').anyOf(taskIds).delete();
+        if (activeChatId === id) {
+          setActiveChatId(null);
+          router.push('/');
+        }
       }
-    }
+    });
   };
 
   const handleDeleteTask = async (id: string) => {
-    if (confirm("Delete this task?")) {
-      await db.tasks.delete(id);
-      await db.subtasks.where('taskId').equals(id).delete();
-    }
+    showDialog({
+      title: "Discard Task?",
+      message: "Are you sure you want to delete this task? You can always create a new one with Ditiro later.",
+      confirmLabel: "Discard",
+      cancelLabel: "Cancel",
+      type: "confirm",
+      onConfirm: async () => {
+        await db.tasks.delete(id);
+        await db.subtasks.where('taskId').equals(id).delete();
+      }
+    });
   };
 
   return (

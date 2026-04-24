@@ -7,10 +7,12 @@ import { useRouter } from 'next/navigation';
 import { LoadingScreen } from '@/components/auth/LoadingScreen';
 
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useDialog } from '@/components/ui/DialogProvider';
 
 export default function LoginPage() {
   const router = useRouter();
   const { user, isGuest, loading, setAsGuest } = useAuth();
+  const { showDialog } = useDialog();
   const [showBenefits, setShowBenefits] = React.useState(false);
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -36,7 +38,11 @@ export default function LoginPage() {
       console.error("Google Sign-In Error:", error);
       setIsProcessing(false);
       if (error.code !== 'auth/cancelled-popup-request') {
-        alert("Sign-in failed. Please try again.");
+        showDialog({
+          title: "Sign-in Error",
+          message: "We couldn't sign you in with Google right now. Please try again or continue without sign up.",
+          type: "alert"
+        });
       }
     }
   };
@@ -80,14 +86,14 @@ export default function LoginPage() {
         <div className="bg-neutral-900/50 backdrop-blur-xl border border-neutral-800 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center text-center shadow-2xl transition-all">
           {/* Logo */}
           <DitiroIcon className="w-16 h-16 md:w-20 md:h-20 text-[#e05012] mb-6 md:mb-8" />
-          
+
           {/* Text Content */}
           <h1 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3 tracking-tight">Welcome to Ditiro.</h1>
-          <p className="text-neutral-400 text-base md:text-lg mb-8 md:mb-10">Facilitating deeds. Acto action.</p>
+          <p className="text-neutral-400 text-base md:text-lg mb-8 md:mb-10">Turning intentions... into actions.</p>
 
           {/* Buttons */}
           <div className="w-full space-y-4">
-            <button 
+            <button
               onClick={handleGoogleSignIn}
               disabled={isProcessing}
               className="w-full bg-[#e05012] hover:bg-[#ff5f1f] text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70"
@@ -102,11 +108,11 @@ export default function LoginPage() {
               <div className="h-px bg-neutral-800 flex-1" />
             </div>
 
-            <button 
+            <button
               onClick={handleNoSignUp}
               className="w-full border-2 border-[#e05012] text-[#e05012] hover:bg-[#e05012]/10 font-semibold py-4 rounded-xl transition-all active:scale-[0.98]"
             >
-              No sign up
+              Continue as Guest
             </button>
           </div>
         </div>
@@ -136,9 +142,9 @@ export default function LoginPage() {
                 Signing up allows you to persist your conversations, sync tasks across all your devices, and unlock the full potential of Ditiro's AI organization features.
               </p>
             </div>
-            
+
             <div className="bg-neutral-950/50 p-6 flex flex-col gap-4 border-t border-neutral-800">
-              <button 
+              <button
                 onClick={handleFinalContinue}
                 className="w-full text-neutral-400 hover:text-white transition-colors text-sm font-medium py-2"
               >
@@ -149,7 +155,7 @@ export default function LoginPage() {
                 <span className="text-xs uppercase tracking-widest font-bold">or</span>
                 <div className="h-px bg-neutral-800 flex-1" />
               </div>
-              <button 
+              <button
                 onClick={handleGoogleSignIn}
                 disabled={isProcessing}
                 className="w-full bg-[#e05012] hover:bg-[#ff5f1f] text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70"
