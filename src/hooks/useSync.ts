@@ -13,6 +13,7 @@ import {
 import { firestore, auth } from '@/lib/firebase';
 import { db } from '@/lib/dexie';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { encryptData, decryptData } from '@/lib/encryption';
 
 // Copy identity hashing for use in sync
 const hashTaskIdentity = (title: string, date?: string | null, chatId?: string | null) => {
@@ -60,7 +61,11 @@ export const useSync = () => {
             for (const docData of localDocs) {
               const docRef = doc(firestore, 'users', uid, col, docData.id);
               const updatedDoc = { ...docData, userId: uid, updatedAt: Date.now() };
-              batch.set(docRef, sanitizeForFirestore(updatedDoc));
+              const sanitized = sanitizeForFirestore(updatedDoc);
+              batch.set(docRef, {
+                encryptedData: encryptData(sanitized, uid),
+                updatedAt: sanitized.updatedAt
+              });
               await db.table(col).put(updatedDoc); 
               migratedCount++;
             }
@@ -89,7 +94,11 @@ export const useSync = () => {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
         if (!obj.userId) obj.userId = currentUser.uid;
-        setDoc(doc(firestore, 'users', currentUser.uid, col, id), sanitizeForFirestore(obj));
+        const sanitized = sanitizeForFirestore(obj);
+        setDoc(doc(firestore, 'users', currentUser.uid, col, id), {
+          encryptedData: encryptData(sanitized, currentUser.uid),
+          updatedAt: sanitized.updatedAt || Date.now()
+        });
         return obj;
       };
       const onUpdate = (mods: any, id: any, obj: any) => {
@@ -97,7 +106,11 @@ export const useSync = () => {
         if (!currentUser) return;
         console.log(`[useSync] Outbound update for ${col}:${id}`, mods);
         const merged = { ...obj, ...mods, userId: currentUser.uid };
-        setDoc(doc(firestore, 'users', currentUser.uid, col, id), sanitizeForFirestore(merged));
+        const sanitized = sanitizeForFirestore(merged);
+        setDoc(doc(firestore, 'users', currentUser.uid, col, id), {
+          encryptedData: encryptData(sanitized, currentUser.uid),
+          updatedAt: sanitized.updatedAt || Date.now()
+        });
       };
       const onDelete = (id: any) => {
         const currentUser = auth.currentUser;
@@ -120,8 +133,16 @@ export const useSync = () => {
       const q = query(collection(firestore, 'users', uid, col));
       return onSnapshot(q, (snapshot) => {
         snapshot.docChanges().forEach(async (change) => {
-          const data = change.doc.data();
+          let data = change.doc.data();
           const id = change.doc.id;
+          
+          if (data.encryptedData) {
+            const decrypted = decryptData(data.encryptedData, uid);
+            if (decrypted) {
+              data = { ...data, ...decrypted };
+            }
+          }
+
           if (change.type === 'added' || change.type === 'modified') {
             const local = await db.table(col).get(id);
             

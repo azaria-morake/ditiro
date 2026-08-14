@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 import { DitiroIcon, LXGLogo, SparkleIcon, GoogleIcon } from '@/components/brand/Logos';
 import { useRouter } from 'next/navigation';
 import { LoadingScreen } from '@/components/auth/LoadingScreen';
@@ -11,21 +10,27 @@ import { useDialog } from '@/components/ui/DialogProvider';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, isGuest, loading, setAsGuest } = useAuth();
+  const { user, isGuest, loading, setAsGuest, loginWithEmail, signUpWithEmail } = useAuth();
   const { showDialog } = useDialog();
-  const [showBenefits, setShowBenefits] = React.useState(false);
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [showBenefits, setShowBenefits] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Email Auth State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && (user || isGuest)) {
-      // If we are already logged in, skip the manual 'isLoggingIn' flow
       router.push('/');
     }
   }, [user, isGuest, loading, router]);
 
   const handleGoogleSignIn = async () => {
     setIsProcessing(true);
+    setAuthError(null);
     try {
       const { signInWithPopup, GoogleAuthProvider } = await import('firebase/auth');
       const { auth } = await import('@/lib/firebase');
@@ -37,13 +42,50 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Google Sign-In Error:", error);
       setIsProcessing(false);
-      if (error.code !== 'auth/cancelled-popup-request') {
+      if (error.code !== 'auth/cancelled-popup-request' && error.code !== 'auth/popup-closed-by-user') {
         showDialog({
-          title: "Sign-in Error",
-          message: "We couldn't sign you in with Google right now. Please try again or continue without sign up.",
+          title: "Google Sign-in Error",
+          message: "Could not complete Google sign-in. You can sign in using Email & Password or Guest mode.",
           type: "alert"
         });
       }
+    }
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setAuthError("Please enter both email and password.");
+      return;
+    }
+    setIsProcessing(true);
+    setAuthError(null);
+
+    try {
+      if (isSignUp) {
+        await signUpWithEmail(email.trim(), password);
+      } else {
+        await loginWithEmail(email.trim(), password);
+      }
+      setIsLoggingIn(true);
+    } catch (err: any) {
+      console.error("Email auth error:", err);
+      setIsProcessing(false);
+      let msg = "Authentication failed. Please check your details.";
+      if (err.code === "auth/network-request-failed") {
+        msg = "Network error: Unable to reach Firebase Auth services (ERR_NAME_NOT_RESOLVED). Please check your internet connection, DNS, or ad-blocker settings.";
+      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+        msg = "Invalid email or password. Please check your credentials.";
+      } else if (err.code === "auth/user-not-found") {
+        msg = "No account found with this email. Try creating an account.";
+      } else if (err.code === "auth/email-already-in-use") {
+        msg = "An account with this email already exists. Try signing in instead.";
+      } else if (err.code === "auth/weak-password") {
+        msg = "Password should be at least 6 characters long.";
+      } else if (err.code === "auth/invalid-email") {
+        msg = "Please enter a valid email address.";
+      }
+      setAuthError(msg);
     }
   };
 
@@ -59,12 +101,10 @@ export default function LoginPage() {
   };
 
   const handleSetupComplete = () => {
-    // If auth state has caught up, redirect will happen via useEffect above.
-    // If not, we stay on the loading screen or reset to handle errors.
     if (!loading && (user || isGuest)) {
       router.push('/');
     } else if (!loading) {
-      setIsLoggingIn(false); // Back to login if something failed
+      setIsLoggingIn(false);
     }
   };
 
@@ -73,7 +113,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-neutral-950 text-white flex flex-col items-center justify-center relative font-sans p-6">
+    <div className="min-h-[100dvh] bg-neutral-950 text-white flex flex-col items-center justify-center relative font-sans p-6 overflow-y-auto">
       {/* Background Geometric Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
         <svg className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] text-neutral-800" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="0.5">
@@ -82,21 +122,21 @@ export default function LoginPage() {
         </svg>
       </div>
 
-      <main className="z-10 w-full max-w-md mb-20 md:mb-0">
-        <div className="bg-neutral-900/50 backdrop-blur-xl border border-neutral-800 rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center text-center shadow-2xl transition-all">
+      <main className="z-10 w-full max-w-md my-8">
+        <div className="bg-neutral-900/60 backdrop-blur-xl border border-neutral-800 rounded-[2.5rem] p-6 md:p-10 flex flex-col items-center text-center shadow-2xl transition-all">
           {/* Logo */}
-          <DitiroIcon className="w-16 h-16 md:w-20 md:h-20 text-[#e05012] mb-6 md:mb-8" />
+          <DitiroIcon className="w-14 h-14 md:w-16 md:h-16 text-[#e05012] mb-4" />
 
           {/* Text Content */}
-          <h1 className="text-2xl md:text-3xl font-bold mb-2 md:mb-3 tracking-tight">Welcome to Ditiro.</h1>
-          <p className="text-neutral-400 text-base md:text-lg mb-8 md:mb-10">Turning intentions... into actions.</p>
+          <h1 className="text-2xl md:text-3xl font-bold mb-1 tracking-tight">Welcome to Ditiro.</h1>
+          <p className="text-neutral-400 text-sm md:text-base mb-6">Turning intentions... into actions.</p>
 
-          {/* Buttons */}
+          {/* Google Sign In Button */}
           <div className="w-full space-y-4">
             <button
               onClick={handleGoogleSignIn}
               disabled={isProcessing}
-              className="w-full bg-[#e05012] hover:bg-[#ff5f1f] text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70"
+              className="w-full bg-[#e05012] hover:bg-[#ff5f1f] text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70 text-sm"
             >
               <GoogleIcon className="w-5 h-5 text-white" />
               {isProcessing ? "Processing..." : "Continue with Google"}
@@ -104,13 +144,80 @@ export default function LoginPage() {
 
             <div className="flex items-center gap-4 text-neutral-600">
               <div className="h-px bg-neutral-800 flex-1" />
-              <span className="text-sm font-medium">or</span>
+              <span className="text-xs font-medium uppercase tracking-wider">or email</span>
+              <div className="h-px bg-neutral-800 flex-1" />
+            </div>
+
+            {/* Auth Error Banner */}
+            {authError && (
+              <div className="w-full bg-red-950/50 border border-red-800/80 rounded-xl p-3 text-red-300 text-xs text-left animate-in fade-in duration-200">
+                {authError}
+              </div>
+            )}
+
+            {/* Email Form */}
+            <form onSubmit={handleEmailSubmit} className="w-full space-y-3 text-left">
+              <div>
+                <label className="block text-xs font-medium text-neutral-400 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-neutral-950/80 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#e05012] transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-neutral-400 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-neutral-950/80 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#e05012] transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="w-full bg-neutral-800 hover:bg-neutral-700 text-white font-semibold py-3 rounded-xl transition-all active:scale-[0.98] disabled:opacity-70 text-sm mt-1"
+              >
+                {isProcessing ? "Authenticating..." : isSignUp ? "Create Account" : "Sign In with Email"}
+              </button>
+            </form>
+
+            {/* Toggle Sign Up / Sign In */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setAuthError(null);
+              }}
+              className="text-xs text-neutral-400 hover:text-white transition-colors"
+            >
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <span className="text-[#e05012] font-semibold">
+                {isSignUp ? "Sign In" : "Sign Up"}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-4 text-neutral-700 pt-1">
+              <div className="h-px bg-neutral-800 flex-1" />
+              <span className="text-[10px] font-medium uppercase tracking-widest text-neutral-600">or</span>
               <div className="h-px bg-neutral-800 flex-1" />
             </div>
 
             <button
               onClick={handleNoSignUp}
-              className="w-full border-2 border-[#e05012] text-[#e05012] hover:bg-[#e05012]/10 font-semibold py-4 rounded-xl transition-all active:scale-[0.98]"
+              className="w-full border border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800/50 font-semibold py-3 rounded-xl transition-all text-xs"
             >
               Continue as Guest
             </button>
@@ -119,15 +226,14 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="absolute bottom-6 md:bottom-8 flex flex-col items-center gap-3 z-10">
+      <footer className="mt-auto py-4 flex flex-col items-center gap-2 z-10">
         <LXGLogo className="h-4 w-auto text-neutral-700" />
-        <p className="text-neutral-500 text-[10px] md:text-xs font-medium uppercase tracking-widest">Made by UX Giants</p>
+        <p className="text-neutral-500 text-[10px] font-medium uppercase tracking-widest">Made by UX Giants</p>
       </footer>
 
-
       {/* Sparkles */}
-      <SparkleIcon className="absolute bottom-10 right-10 w-8 h-8 text-neutral-800" />
-      <SparkleIcon className="absolute top-20 left-20 w-4 h-4 text-neutral-800 opacity-50" />
+      <SparkleIcon className="absolute bottom-10 right-10 w-8 h-8 text-neutral-800 pointer-events-none" />
+      <SparkleIcon className="absolute top-20 left-20 w-4 h-4 text-neutral-800 opacity-50 pointer-events-none" />
 
       {/* Signup Benefits Snackbar */}
       {showBenefits && (

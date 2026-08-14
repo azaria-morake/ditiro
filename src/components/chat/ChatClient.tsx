@@ -280,6 +280,8 @@ export default function ChatClient() {
                         dueDate: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[0] : pt.dateTime?.split('T')[0] || undefined,
                         dueTime: pt.dateTime?.includes(' ') ? pt.dateTime?.split(' ')[1] : pt.dateTime?.split('T')[1]?.substring(0, 5) || undefined,
                         location: pt.location || undefined,
+                        remindersEnabled: true,
+                        alertFrequencyMinutes: 15,
                         updatedAt: Date.now(),
                         userId: user?.uid || ""
                     };

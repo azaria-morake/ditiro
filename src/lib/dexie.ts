@@ -42,6 +42,8 @@ export interface Task {
   dueDate?: string;
   dueTime?: string;
   location?: string;
+  remindersEnabled?: boolean;
+  alertFrequencyMinutes?: number;
   createdAt: number;
   updatedAt: number;
   userId: string;

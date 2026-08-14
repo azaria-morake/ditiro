@@ -25,8 +25,11 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
     const [title, setTitle] = useState("");
     const [dueDate, setDueDate] = useState("");
     const [dueTime, setDueTime] = useState("");
+    const [remindersEnabled, setRemindersEnabled] = useState(true);
+    const [reminderIntervalMinutes, setReminderIntervalMinutes] = useState<number>(30); // 30 mins default
     const [location, setLocation] = useState("");
     const [subtasks, setSubtasks] = useState<string[]>([]);
+
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -63,6 +66,8 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
                 dueDate: dueDate || undefined,
                 dueTime: dueTime || undefined,
                 location: location || undefined,
+                remindersEnabled: remindersEnabled,
+                alertFrequencyMinutes: reminderIntervalMinutes,
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 userId: user?.uid || ""
@@ -81,6 +86,23 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
                 await db.subtasks.bulkAdd(subs);
             }
 
+            // Trigger Ditiro Drone Notification & Timer Subroutine
+            if (user?.uid) {
+              import("@/lib/drone/reminderDispatcher").then(({ registerOrUpdateTaskSubroutine }) => {
+                registerOrUpdateTaskSubroutine({
+                  id: taskId,
+                  title: title.trim(),
+                  dueDate: dueDate || undefined,
+                  dueTime: dueTime || undefined,
+                  userId: user.uid,
+                  remindersEnabled,
+                  reminderIntervalMs: reminderIntervalMinutes * 60 * 1000,
+                });
+              });
+            }
+
+
+
             setIsSuccess(true);
             
             // Short delay so they see the success state
@@ -91,6 +113,7 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
                     router.push(`/?t=${taskId}`);
                 }
             }, 800);
+
 
         } catch (e) {
             console.error("Failed to save task manually", e);
@@ -167,8 +190,56 @@ export default function CreateTaskCard({ onClose, currentChatId }: CreateTaskCar
                         </div>
                     </div>
 
+                    {/* Ditiro Drone Reminders & Interval Controls */}
+                    <div className="flex flex-col gap-3">
+                        <div className="flex justify-between items-center px-1">
+                            <h3 className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest flex items-center gap-1.5">
+                                <span>🛸</span> Ditiro Drone Reminders
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setRemindersEnabled(!remindersEnabled)}
+                                className={clsx(
+                                    "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                                    remindersEnabled ? "bg-[#e05012]" : "bg-neutral-800"
+                                )}
+                            >
+                                <span
+                                    className={clsx(
+                                        "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out",
+                                        remindersEnabled ? "translate-x-4" : "translate-x-0"
+                                    )}
+                                />
+                            </button>
+                        </div>
+
+                        {remindersEnabled && (
+                            <div className="flex flex-col gap-2 p-3 bg-neutral-800/30 border border-neutral-800 rounded-2xl animate-in fade-in">
+                                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Alert Frequency</span>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[15, 30, 60].map((mins) => (
+                                        <button
+                                            key={mins}
+                                            type="button"
+                                            onClick={() => setReminderIntervalMinutes(mins)}
+                                            className={clsx(
+                                                "py-1.5 px-2 rounded-xl text-xs font-bold transition-all border",
+                                                reminderIntervalMinutes === mins
+                                                    ? "bg-[#e05012]/15 border-[#e05012] text-[#e05012]"
+                                                    : "bg-neutral-900/50 border-neutral-800 text-neutral-400 hover:border-neutral-700"
+                                            )}
+                                        >
+                                            {mins} mins
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Location Section */}
                     <div className="flex flex-col gap-3">
+
                         <h3 className="text-[11px] font-bold text-neutral-500 uppercase tracking-widest px-1">Location</h3>
                         <div className="relative group">
                             <div className="flex items-center gap-3 p-3.5 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl transition-all group-focus-within:border-[#e05012]/50">

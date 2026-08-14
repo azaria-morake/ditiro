@@ -1,8 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  User
+} from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useSync } from '@/hooks/useSync';
 
 interface AuthContextType {
   user: User | null;
@@ -11,6 +17,8 @@ interface AuthContextType {
   setAsGuest: () => void;
   logout: () => Promise<void>;
   loginWithGoogle: () => Promise<User | null>;
+  loginWithEmail: (email: string, pass: string) => Promise<User | null>;
+  signUpWithEmail: (email: string, pass: string) => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,9 +28,9 @@ const AuthContext = createContext<AuthContextType>({
   setAsGuest: () => {},
   logout: async () => {},
   loginWithGoogle: async () => null,
+  loginWithEmail: async () => null,
+  signUpWithEmail: async () => null,
 });
-
-import { useSync } from '@/hooks/useSync';
 
 const SyncManager = () => {
   useSync();
@@ -75,8 +83,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const loginWithEmail = async (email: string, pass: string) => {
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      if (cred.user) {
+        localStorage.removeItem('ditiro_guest');
+        setIsGuest(false);
+      }
+      return cred.user;
+    } catch (error) {
+      console.error("Email Sign-in failed in provider:", error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, pass: string) => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      if (cred.user) {
+        localStorage.removeItem('ditiro_guest');
+        setIsGuest(false);
+      }
+      return cred.user;
+    } catch (error) {
+      console.error("Email Sign-up failed in provider:", error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, isGuest, setAsGuest, logout, loginWithGoogle }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isGuest,
+        setAsGuest,
+        logout,
+        loginWithGoogle,
+        loginWithEmail,
+        signUpWithEmail,
+      }}
+    >
       {!loading && <SyncManager />}
       {children}
     </AuthContext.Provider>
