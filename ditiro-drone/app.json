@@ -21,7 +21,8 @@
           "icon": "./assets/drone-icon.png",
           "color": "#D48C2B"
         }
-      ]
+      ],
+      "@react-native-google-signin/google-signin"
     ],
     "ios": {
       "supportsTablet": false,
@@ -35,6 +36,7 @@
     },
     "android": {
       "package": "com.ditiro.drone",
+      "googleServicesFile": "./google-services.json",
       "useNextNotificationsApi": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -44,6 +46,11 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "scheme": "ditiro-drone"
+    "scheme": "ditiro-drone",
+    "extra": {
+      "eas": {
+        "projectId": "a515e05c-576e-4dbf-b0dc-d83e774ef10e"
+      }
+    }
   }
 }

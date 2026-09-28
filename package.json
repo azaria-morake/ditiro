@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "drone": "npm --prefix ditiro-drone start",
+    "drone:tunnel": "npm --prefix ditiro-drone run tunnel",
+    "drone:android": "npm --prefix ditiro-drone run android"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

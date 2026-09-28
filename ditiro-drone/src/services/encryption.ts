@@ -1,3 +1,4 @@
+import './cryptoPolyfill';
 import CryptoJS from 'crypto-js';
 
 const SALT = "DITIRO_ENCRYPTION_SALT_2026_SECURE";

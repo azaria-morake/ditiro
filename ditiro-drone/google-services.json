@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "246231271383",
+    "project_id": "ditiro-cdf6e",
+    "storage_bucket": "ditiro-cdf6e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246231271383:android:e2b47ad2a151b226c26d92",
+        "android_client_info": {
+          "package_name": "com.ditiro.drone"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "246231271383-16ee6lbskd5roa0fnqk3phg21r59cfqg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ditiro.drone",
+            "certificate_hash": "73de148350b562a9ab98350ee2d2e42fb916f7c8"
+          }
+        },
+        {
+          "client_id": "246231271383-qrojl4pvj98qaqg6jgcc0kp9hbje6070.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ditiro.drone",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "246231271383-raar07b8sd8su1ichk7q45cfja1mmrbq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_NEb8xjGreSQGFW7Ms6zthVNk70ojFM8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "246231271383-raar07b8sd8su1ichk7q45cfja1mmrbq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

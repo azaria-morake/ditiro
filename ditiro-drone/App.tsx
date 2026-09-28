@@ -1,7 +1,9 @@
+import './src/services/cryptoPolyfill';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { onAuthStateChanged, User } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from './src/services/firebase';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -15,8 +17,13 @@ export default function App() {
   useEffect(() => {
     setupBackgroundSyncTasks();
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser?.uid) {
+        await AsyncStorage.setItem('@ditiro_active_uid', currentUser.uid);
+      } else {
+        await AsyncStorage.removeItem('@ditiro_active_uid');
+      }
       setAuthChecking(false);
     });
 

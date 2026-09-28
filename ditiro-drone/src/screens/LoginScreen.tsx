@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -20,8 +20,19 @@ import {
   signInWithPopup,
   signInWithCredential
 } from 'firebase/auth';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { auth } from '../services/firebase';
 import { COLORS, SPACING } from '../constants/theme';
+import {
+  Radio,
+  Mail,
+  Lock,
+  LogIn,
+  UserPlus,
+  UserCheck,
+  Globe,
+  AlertCircle
+} from 'lucide-react-native';
 
 interface LoginScreenProps {
   onLoginSuccess?: () => void;
@@ -33,6 +44,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      try {
+        const webClientId =
+          process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+          '246231271383-raar07b8sd8su1ichk7q45cfja1mmrbq.apps.googleusercontent.com';
+        GoogleSignin.configure({
+          webClientId,
+          offlineAccess: false,
+        });
+      } catch (e) {
+        console.warn('[LoginScreen] GoogleSignin configuration error:', e);
+      }
+    }
+  }, []);
 
   const handleEmailAuth = async () => {
     if (!email.trim() || !password.trim()) {
@@ -91,17 +118,41 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
       } else {
-        setErrorMessage(
-          'Google Sign-In via web popup is not supported in Expo Go mobile environment. Please sign in with Email & Password or Guest mode.'
-        );
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+        const response = await GoogleSignin.signIn();
+
+        if (response.type === 'cancelled') {
+          return;
+        }
+
+        const idToken = response.data?.idToken || (response as any).idToken;
+        if (!idToken) {
+          throw new Error('Google Sign-In completed, but no ID token was received.');
+        }
+
+        const credential = GoogleAuthProvider.credential(idToken);
+        await signInWithCredential(auth, credential);
       }
     } catch (err: any) {
       console.error('[LoginScreen] Google sign-in error:', err);
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setErrorMessage(
-          err.message || 'Google sign-in failed. Please sign in with Email & Password or Guest mode.'
-        );
+      if (
+        err.code === statusCodes?.SIGN_IN_CANCELLED ||
+        err.code === 'auth/popup-closed-by-user' ||
+        err.message?.toLowerCase().includes('cancel')
+      ) {
+        // User voluntarily dismissed or cancelled the Google chooser dialog
+        return;
       }
+      if (err.code === statusCodes?.IN_PROGRESS) {
+        return;
+      }
+      if (err.code === statusCodes?.PLAY_SERVICES_NOT_AVAILABLE) {
+        setErrorMessage('Google Play Services is not available or outdated.');
+        return;
+      }
+      setErrorMessage(
+        err.message || 'Google sign-in failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -118,7 +169,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
           {/* Header & Logo */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Text style={styles.droneLogoIcon}>🛸</Text>
+              <Radio size={32} color={COLORS.primaryAccent} />
             </View>
             <Text style={styles.title}>Welcome to Ditiro</Text>
             <Text style={styles.subtitle}>Mobile Drone & Task Synchronization Layer</Text>
@@ -134,7 +185,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
               onPress={handleGoogleSignIn}
               disabled={loading}
             >
-              <Text style={styles.googleIcon}>G</Text>
+              <Globe size={18} color="#1F2937" />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
 
@@ -147,13 +198,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
             {/* Error Banner */}
             {errorMessage && (
               <View style={styles.errorBox}>
+                <AlertCircle size={16} color="#F87171" style={{ marginRight: 6 }} />
                 <Text style={styles.errorText}>{errorMessage}</Text>
               </View>
             )}
 
             {/* Email Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email Address</Text>
+              <View style={styles.labelRow}>
+                <Mail size={14} color={COLORS.mutedText} />
+                <Text style={styles.inputLabel}>Email Address</Text>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="name@example.com"
@@ -167,7 +222,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
 
             {/* Password Input */}
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <View style={styles.labelRow}>
+                <Lock size={14} color={COLORS.mutedText} />
+                <Text style={styles.inputLabel}>Password</Text>
+              </View>
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
@@ -187,9 +245,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.primaryButtonText}>
-                  {isSignUp ? 'Create Account' : 'Sign In'}
-                </Text>
+                <View style={styles.buttonContentRow}>
+                  {isSignUp ? (
+                    <UserPlus size={18} color="#FFFFFF" />
+                  ) : (
+                    <LogIn size={18} color="#FFFFFF" />
+                  )}
+                  <Text style={styles.primaryButtonText}>
+                    {isSignUp ? 'Create Account' : 'Sign In'}
+                  </Text>
+                </View>
               )}
             </TouchableOpacity>
 
@@ -217,6 +282,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
               onPress={handleGuestSignIn}
               disabled={loading}
             >
+              <UserCheck size={18} color={COLORS.primaryAccent} />
               <Text style={styles.secondaryButtonText}>Continue as Guest</Text>
             </TouchableOpacity>
 
@@ -348,11 +414,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  buttonContentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   primaryButton: {
     backgroundColor: COLORS.primaryAccent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: SPACING.xs,
   },
   primaryButtonText: {
@@ -365,7 +442,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primaryAccent,
     borderRadius: 10,
     paddingVertical: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
   },
   secondaryButtonText: {
     color: COLORS.primaryAccent,

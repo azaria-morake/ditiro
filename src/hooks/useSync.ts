@@ -54,19 +54,23 @@ export const useSync = () => {
         let migratedCount = 0;
         for (const col of collections) {
           const allDocs = await db.table(col).toArray();
-          const localDocs = allDocs.filter(d => !d.userId || d.userId === "");
+          const targetDocs = allDocs.filter(d => !d.userId || d.userId === "" || d.userId === uid);
           
-          if (localDocs.length > 0) {
+          if (targetDocs.length > 0) {
             const batch = writeBatch(firestore);
-            for (const docData of localDocs) {
-              const docRef = doc(firestore, 'users', uid, col, docData.id);
-              const updatedDoc = { ...docData, userId: uid, updatedAt: Date.now() };
+            for (const docData of targetDocs) {
+              const docId = docData.id;
+              if (!docId) continue;
+              const docRef = doc(firestore, 'users', uid, col, docId);
+              const updatedDoc = { ...docData, userId: uid, updatedAt: docData.updatedAt || Date.now() };
               const sanitized = sanitizeForFirestore(updatedDoc);
               batch.set(docRef, {
                 encryptedData: encryptData(sanitized, uid),
                 updatedAt: sanitized.updatedAt
-              });
-              await db.table(col).put(updatedDoc); 
+              }, { merge: true });
+              if (!docData.userId || docData.userId === "") {
+                await db.table(col).put(updatedDoc);
+              }
               migratedCount++;
             }
             await batch.commit();
@@ -92,30 +96,48 @@ export const useSync = () => {
       const table = db.table(col);
       const onCreate = (id: any, obj: any) => {
         const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        if (!obj.userId) obj.userId = currentUser.uid;
+        const currentUid = currentUser?.uid || uid;
+        if (!currentUid) return;
+        if (!obj.userId) obj.userId = currentUid;
+        const docId = id || obj?.id;
+        if (!docId) {
+          console.warn(`[useSync] onCreate called without docId for ${col}`, obj);
+          return;
+        }
         const sanitized = sanitizeForFirestore(obj);
-        setDoc(doc(firestore, 'users', currentUser.uid, col, id), {
-          encryptedData: encryptData(sanitized, currentUser.uid),
+        setDoc(doc(firestore, 'users', currentUid, col, docId), {
+          encryptedData: encryptData(sanitized, currentUid),
           updatedAt: sanitized.updatedAt || Date.now()
+        }).catch(err => {
+          console.error(`[useSync] Firestore write error for ${col}:${docId}`, err);
         });
-        return obj;
+        // Note: Dexie creating hook must return undefined unless intentionally overriding primary key
       };
       const onUpdate = (mods: any, id: any, obj: any) => {
         const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        console.log(`[useSync] Outbound update for ${col}:${id}`, mods);
-        const merged = { ...obj, ...mods, userId: currentUser.uid };
+        const currentUid = currentUser?.uid || uid;
+        if (!currentUid) return;
+        const docId = id || obj?.id || mods?.id;
+        if (!docId) return;
+        console.log(`[useSync] Outbound update for ${col}:${docId}`, mods);
+        const merged = { ...obj, ...mods, userId: currentUid };
         const sanitized = sanitizeForFirestore(merged);
-        setDoc(doc(firestore, 'users', currentUser.uid, col, id), {
-          encryptedData: encryptData(sanitized, currentUser.uid),
+        setDoc(doc(firestore, 'users', currentUid, col, docId), {
+          encryptedData: encryptData(sanitized, currentUid),
           updatedAt: sanitized.updatedAt || Date.now()
+        }).catch(err => {
+          console.error(`[useSync] Firestore update error for ${col}:${docId}`, err);
         });
       };
-      const onDelete = (id: any) => {
+      const onDelete = (id: any, obj: any) => {
         const currentUser = auth.currentUser;
-        if (!currentUser) return;
-        deleteDoc(doc(firestore, 'users', currentUser.uid, col, id));
+        const currentUid = currentUser?.uid || uid;
+        if (!currentUid) return;
+        const docId = id || obj?.id;
+        if (!docId) return;
+        deleteDoc(doc(firestore, 'users', currentUid, col, docId)).catch(err => {
+          console.error(`[useSync] Firestore delete error for ${col}:${docId}`, err);
+        });
       };
 
       table.hook('creating', onCreate);
