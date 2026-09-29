@@ -22,7 +22,7 @@ else
     echo "Launching Android Virtual Device: $AVD_NAME..."
     echo "Hardware acceleration: KVM active, GPU mode: host, Resolution: 720x1280."
     
-    emulator -avd "$AVD_NAME" -gpu host -no-snapshot-load -no-boot-anim -netdelay none -netspeed full &
+    emulator -avd "$AVD_NAME" -gpu host -no-audio -no-snapshot-load -no-boot-anim -netdelay none -netspeed full &
     
     echo "Waiting for emulator to boot up..."
     adb wait-for-device
