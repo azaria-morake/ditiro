@@ -14,6 +14,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarClockModal } from '../components/CalendarClockModal';
+import { EditDeedModal } from '../components/EditDeedModal';
+import { Toast } from '../components/Toast';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { COLORS, SPACING } from '../constants/theme';
 import {
   getDroneSettings,
@@ -23,6 +26,7 @@ import {
   toggleTaskStatus,
   createDroneTask,
   deleteDroneTask,
+  updateDroneTask,
   DroneSettings,
   TaskReminder
 } from '../services/droneSync';
@@ -54,7 +58,8 @@ import {
   ShieldCheck,
   AlertTriangle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ArrowLeftRight
 } from 'lucide-react-native';
 
 interface HomeScreenProps {
@@ -108,6 +113,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
   const [customAlertTitle, setCustomAlertTitle] = useState('');
   const [isSchedulingCustom, setIsSchedulingCustom] = useState(false);
   const [customAlertNotice, setCustomAlertNotice] = useState<string | null>(null);
+
+  // Edit Deed Modal State
+  const [editingTask, setEditingTask] = useState<TaskReminder | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+
+  // Toast State
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'info' | 'error'>('success');
+
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
 
   const userId = user?.uid;
   const userEmail = user?.email;
@@ -197,6 +217,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
     setTasks(updatedTasks);
     await scheduleTaskNotifications(updatedTasks, settings.globalNotificationsEnabled);
     await toggleTaskStatus(userId, taskId, currentStatus);
+    showToast(
+      nextStatus === 'completed' ? 'Deed moved to Completed!' : 'Deed marked as Active!',
+      'success'
+    );
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -205,6 +229,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
     setTasks(updatedTasks);
     await scheduleTaskNotifications(updatedTasks, settings.globalNotificationsEnabled);
     await deleteDroneTask(userId, taskId);
+    showToast('Deed deleted.', 'info');
+  };
+
+  const handleOpenEditModal = (task: TaskReminder) => {
+    setEditingTask(task);
+    setEditModalVisible(true);
+  };
+
+  const handleSaveEditedTask = async (updatedValues: {
+    title: string;
+    dueDate: string;
+    dueTime: string;
+    remindersEnabled: boolean;
+    alertFrequencyMinutes: number;
+    status: 'active' | 'completed';
+    priority?: 'high' | 'medium' | 'low';
+  }) => {
+    if (!editingTask || !userId) return;
+    const success = await updateDroneTask(userId, editingTask.id, updatedValues);
+    if (success) {
+      const updatedList = tasks.map((t) =>
+        t.id === editingTask.id ? { ...t, ...updatedValues } : t
+      );
+      setTasks(updatedList);
+      await scheduleTaskNotifications(updatedList, settings.globalNotificationsEnabled);
+      showToast('Deed updated successfully!', 'success');
+    } else {
+      showToast('Failed to update deed. Please try again.', 'error');
+    }
   };
 
   // Unified Calendar & Clock Modal State
@@ -405,13 +458,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await auth.signOut();
-      if (onSignOut) onSignOut();
-    } catch (err) {
-      console.error('[HomeScreen] Sign out failed:', err);
-    }
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out of Ditiro Drone?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (Platform.OS !== 'web') {
+                try {
+                  await GoogleSignin.signOut();
+                } catch (gErr) {
+                  console.log('[HomeScreen] Google Sign-Out error (safe to ignore):', gErr);
+                }
+              }
+              await auth.signOut();
+              if (onSignOut) onSignOut();
+            } catch (err) {
+              console.error('[HomeScreen] Sign out failed:', err);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleSwitchAccount = () => {
+    Alert.alert(
+      'Switch Account',
+      'Are you sure you want to switch accounts? You will be signed out so you can sign in with another account.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Switch Account',
+          onPress: async () => {
+            try {
+              if (Platform.OS !== 'web') {
+                try {
+                  await GoogleSignin.signOut();
+                } catch (gErr) {
+                  console.log('[HomeScreen] Google Sign-Out error (safe to ignore):', gErr);
+                }
+              }
+              await auth.signOut();
+              if (onSignOut) onSignOut();
+            } catch (err) {
+              console.error('[HomeScreen] Switch account failed:', err);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const activeCount = tasks.filter((t) => t.status === 'active' && !isTaskOverdue(t.dueDate, t.dueTime)).length;
@@ -482,6 +583,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
           <View style={styles.sessionRow}>
             <Text style={styles.sessionLabel}>Connected Account:</Text>
             <Text style={styles.sessionValue}>{userEmail || 'Authenticated User'}</Text>
+          </View>
+
+          <View style={styles.sessionActionRow}>
+            <TouchableOpacity style={styles.switchAccountButton} onPress={handleSwitchAccount}>
+              <ArrowLeftRight size={13} color={COLORS.primaryAccent} style={{ marginRight: 6 }} />
+              <Text style={styles.switchAccountButtonText}>Switch Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.signOutCardButton} onPress={handleSignOut}>
+              <LogOut size={13} color={COLORS.softText} style={{ marginRight: 6 }} />
+              <Text style={styles.signOutCardButtonText}>Sign Out</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1077,8 +1190,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                       )}
                     </TouchableOpacity>
 
-                    {/* Task Details */}
-                    <View style={styles.taskInfo}>
+                    {/* Task Details - Tap to Modify */}
+                    <TouchableOpacity
+                      style={styles.taskInfo}
+                      activeOpacity={0.7}
+                      onPress={() => handleOpenEditModal(task)}
+                    >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         <Text
                           style={[
@@ -1100,8 +1217,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                         <Text style={[styles.taskMeta, isOverdue && styles.taskMetaOverdue]}>
                           Due: {task.dueDate} at {task.dueTime}
                         </Text>
+                        <Text style={styles.taskTapEditHint}>• Tap to edit</Text>
                       </View>
-                    </View>
+                    </TouchableOpacity>
 
                     {/* Actions: Delete & Reminder Switch */}
                     <View style={styles.taskActionsRow}>
@@ -1181,6 +1299,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
         title={getModalTitle()}
         onConfirm={handleModalConfirm}
         onClose={() => setPickerModalVisible(false)}
+      />
+
+      {/* Modify Deed Modal */}
+      <EditDeedModal
+        visible={editModalVisible}
+        task={editingTask}
+        onClose={() => setEditModalVisible(false)}
+        onSave={handleSaveEditedTask}
+      />
+
+      {/* Floating Confirmation Toast */}
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        onDismiss={() => setToastVisible(false)}
       />
     </SafeAreaView>
   );
@@ -1307,6 +1441,47 @@ const styles = StyleSheet.create({
   sessionValue: {
     color: COLORS.primaryAccent,
     fontSize: 13,
+    fontWeight: '600',
+  },
+  sessionActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#282B33',
+  },
+  switchAccountButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(224, 80, 18, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(224, 80, 18, 0.3)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  switchAccountButtonText: {
+    color: COLORS.primaryAccent,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  signOutCardButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#282B33',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  signOutCardButtonText: {
+    color: COLORS.softText,
+    fontSize: 12,
     fontWeight: '600',
   },
   quickAddRow: {
@@ -1705,6 +1880,12 @@ const styles = StyleSheet.create({
   taskMetaOverdue: {
     color: '#EF4444',
     fontWeight: '600',
+  },
+  taskTapEditHint: {
+    color: COLORS.primaryAccent,
+    fontSize: 11,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   taskActionsRow: {
     flexDirection: 'row',

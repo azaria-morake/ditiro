@@ -207,7 +207,12 @@ export async function toggleTaskStatus(
           updatedAt: Date.now(),
         };
         const newEncrypted = encryptData(updatedTask, userId);
-        await setDoc(taskRef, { encryptedData: newEncrypted, updatedAt: Date.now() }, { merge: true });
+        await setDoc(taskRef, {
+          encryptedData: newEncrypted,
+          status: nextStatus,
+          remindersEnabled: nextStatus === 'active',
+          updatedAt: Date.now(),
+        }, { merge: true });
         return nextStatus;
       }
     }
@@ -221,6 +226,59 @@ export async function toggleTaskStatus(
   } catch (error) {
     console.error('[DroneSync] Error toggling task status:', error);
     return currentStatus;
+  }
+}
+
+export async function updateDroneTask(
+  userId: string,
+  taskId: string,
+  updates: {
+    title?: string;
+    dueDate?: string;
+    dueTime?: string;
+    alertFrequencyMinutes?: number;
+    remindersEnabled?: boolean;
+    status?: 'active' | 'completed';
+    priority?: 'high' | 'medium' | 'low';
+  }
+): Promise<boolean> {
+  try {
+    const taskRef = doc(firestore, 'users', userId, 'tasks', taskId);
+    const snap = await getDoc(taskRef);
+    const now = Date.now();
+
+    if (snap.exists()) {
+      const rawData = snap.data();
+      let decrypted: any = {};
+      if (rawData.encryptedData) {
+        decrypted = decryptData(rawData.encryptedData, userId) || {};
+      } else {
+        decrypted = { ...rawData };
+      }
+
+      const mergedTask = {
+        ...decrypted,
+        ...updates,
+        updatedAt: now,
+      };
+
+      const newEncrypted = encryptData(mergedTask, userId);
+      await setDoc(
+        taskRef,
+        {
+          ...updates,
+          encryptedData: newEncrypted,
+          updatedAt: now,
+        },
+        { merge: true }
+      );
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('[DroneSync] Error updating drone task:', error);
+    return false;
   }
 }
 

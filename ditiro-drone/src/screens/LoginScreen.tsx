@@ -30,9 +30,9 @@ import {
   LogIn,
   UserPlus,
   UserCheck,
-  Globe,
   AlertCircle
 } from 'lucide-react-native';
+import { GoogleIcon } from '../components/GoogleIcon';
 
 interface LoginScreenProps {
   onLoginSuccess?: () => void;
@@ -185,7 +185,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
               onPress={handleGoogleSignIn}
               disabled={loading}
             >
-              <Globe size={18} color="#1F2937" />
+              <GoogleIcon size={18} />
               <Text style={styles.googleButtonText}>Continue with Google</Text>
             </TouchableOpacity>
 
