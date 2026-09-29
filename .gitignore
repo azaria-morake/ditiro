@@ -30,6 +30,9 @@ DerivedData/
 .DS_Store
 *.pem
 *.apk
+*.AppImage
+vtracer
+squashfs-root/
 
 # debug
 npm-debug.log*
