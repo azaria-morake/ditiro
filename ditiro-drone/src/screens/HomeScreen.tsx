@@ -41,7 +41,7 @@ import {
 } from '../services/notifications';
 import { auth } from '../services/firebase';
 import {
-  Radio,
+  Rocket,
   LogOut,
   Bell,
   BellRing,
@@ -551,7 +551,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
         <View style={styles.headerTitleRow}>
           <View style={{ flex: 1 }}>
             <View style={styles.badgeRow}>
-              <Radio size={14} color={COLORS.success} />
+              <Rocket size={14} color={COLORS.success} />
               <View style={styles.activeDot} />
               <Text style={styles.badgeText}>SCOUT ACTIVE</Text>
             </View>

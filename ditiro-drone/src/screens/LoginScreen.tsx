@@ -24,7 +24,7 @@ import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-si
 import { auth } from '../services/firebase';
 import { COLORS, SPACING } from '../constants/theme';
 import {
-  Radio,
+  Rocket,
   Mail,
   Lock,
   LogIn,
@@ -170,7 +170,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onOpenOnboarding }) =>
           {/* Header & Logo */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
-              <Radio size={32} color={COLORS.primaryAccent} />
+              <Rocket size={32} color={COLORS.primaryAccent} />
             </View>
             <Text style={styles.title}>Welcome to Ditiro</Text>
             <Text style={styles.subtitle}>Mobile Drone & Task Synchronization Layer</Text>

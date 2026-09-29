@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   Text,
-  ImageBackground,
   TouchableOpacity,
   Dimensions,
   ScrollView,
@@ -14,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Radio,
+  Rocket,
   ShieldCheck,
   BellRing,
   Sparkles,
@@ -23,6 +22,7 @@ import {
   Check
 } from 'lucide-react-native';
 import { COLORS } from '../constants/theme';
+import DitiroManSvg from '../../assets/ditiro-man.svg';
 
 interface OnboardingSplashScreenProps {
   onFinish: () => void;
@@ -38,6 +38,14 @@ interface SlideItem {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Responsive sizing for the mascot + wordmark SVG
+// Aspect ratio of ditiro-man.svg is 1570 / 1696 (~0.9257 width/height)
+const MAX_LOGO_HEIGHT = SCREEN_HEIGHT * 0.38;
+const DESIRED_WIDTH = Math.min(SCREEN_WIDTH * 0.72, 285);
+const COMPUTED_HEIGHT = DESIRED_WIDTH * (1696 / 1570);
+const LOGO_HEIGHT = Math.min(COMPUTED_HEIGHT, MAX_LOGO_HEIGHT);
+const LOGO_WIDTH = LOGO_HEIGHT * (1570 / 1696);
+
 const SLIDES: SlideItem[] = [
   {
     id: 1,
@@ -45,7 +53,7 @@ const SLIDES: SlideItem[] = [
     title: 'Your Mobile Task Drone',
     description:
       'A dedicated mobile companion designed to rapidly capture deeds on the fly and keep your daily operations seamlessly aligned.',
-    icon: <Radio size={16} color="#D48C2B" />,
+    icon: <Rocket size={16} color="#D48C2B" />,
   },
   {
     id: 2,
@@ -109,35 +117,38 @@ export const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({ 
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFBF0" />
       
-      {/* Background Image containing mascot, wordmark, tagline */}
-      <ImageBackground
-        source={require('../../assets/splash.png')}
-        style={styles.backgroundImage}
-        resizeMode="contain"
-      >
-        <SafeAreaView style={styles.safeArea}>
-          
-          {/* Top Bar with Skip Button */}
-          <View style={styles.topBar}>
-            <View style={styles.phaseIndicator}>
-              <View style={styles.phaseDot} />
-              <Text style={styles.phaseText}>DRONE SCOUT 1.0</Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={onFinish}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.skipText}>Skip</Text>
-            </TouchableOpacity>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Top Bar with Skip Button */}
+        <View style={styles.topBar}>
+          <View style={styles.phaseIndicator}>
+            <View style={styles.phaseDot} />
+            <Text style={styles.phaseText}>DRONE SCOUT 1.0</Text>
           </View>
 
-          {/* Spacer to let mascot and wordmark breathe */}
-          <View style={styles.brandingSpacer} />
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={onFinish}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.skipText}>Skip</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Bottom Card Overlay containing Carousel & Navigation */}
-          <View style={styles.bottomCard}>
+        {/* Hero Branding Section: Transparent SVG + Strong Centered Tagline */}
+        <View style={styles.brandingContainer}>
+          <View style={styles.logoWrapper}>
+            <DitiroManSvg
+              width={LOGO_WIDTH}
+              height={LOGO_HEIGHT}
+            />
+          </View>
+          <Text style={styles.tagline}>
+            Turning intentions — into actions!
+          </Text>
+        </View>
+
+        {/* Bottom Card Overlay containing Carousel & Navigation */}
+        <View style={styles.bottomCard}>
             
             {/* Horizontal Swipeable Slides */}
             <ScrollView
@@ -208,7 +219,6 @@ export const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({ 
             </View>
           </View>
         </SafeAreaView>
-      </ImageBackground>
     </View>
   );
 };
@@ -216,13 +226,7 @@ export const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFBF0', // Exact warm-cream matching splash.png
-  },
-  backgroundImage: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#FFFBF0',
+    backgroundColor: '#FFFBF0', // Exact warm-cream matching brand backdrop
   },
   safeArea: {
     flex: 1,
@@ -267,8 +271,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#0C2342',
   },
-  brandingSpacer: {
-    flex: 1, // Leaves the upper ~55-60% open for the mascot and wordmark in splash.png
+  brandingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  logoWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagline: {
+    marginTop: 14,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0C2342', // Strong deep navy matching Ditiro logo wordmark
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    maxWidth: SCREEN_WIDTH * 0.88,
   },
   bottomCard: {
     backgroundColor: '#0C2342', // Deep navy matching wordmark
