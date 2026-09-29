@@ -36,9 +36,10 @@ import { GoogleIcon } from '../components/GoogleIcon';
 
 interface LoginScreenProps {
   onLoginSuccess?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
-export const LoginScreen: React.FC<LoginScreenProps> = () => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ onOpenOnboarding }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -287,6 +288,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = () => {
             </TouchableOpacity>
 
           </View>
+
+          {onOpenOnboarding && (
+            <TouchableOpacity
+              style={{ marginTop: 14, alignItems: 'center' }}
+              onPress={onOpenOnboarding}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: COLORS.primaryAccent, fontSize: 13, fontWeight: '600' }}>
+                • Explore Drone Scout Tour
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <Text style={styles.footerText}>UX Giants • Ditiro Ecosystem</Text>
         </ScrollView>

@@ -7,12 +7,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from './src/services/firebase';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { OnboardingSplashScreen } from './src/screens/OnboardingSplashScreen';
 import { COLORS } from './src/constants/theme';
 import { setupBackgroundSyncTasks } from './src/services/notifications';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     setupBackgroundSyncTasks();
@@ -42,9 +44,17 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" backgroundColor={COLORS.background} />
       {user ? (
-        <HomeScreen user={user} onSignOut={() => setUser(null)} />
+        <HomeScreen
+          user={user}
+          onSignOut={() => {
+            setUser(null);
+            setShowSplash(false);
+          }}
+        />
+      ) : showSplash ? (
+        <OnboardingSplashScreen onFinish={() => setShowSplash(false)} />
       ) : (
-        <LoginScreen />
+        <LoginScreen onOpenOnboarding={() => setShowSplash(true)} />
       )}
     </View>
   );
