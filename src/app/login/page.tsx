@@ -125,7 +125,7 @@ export default function LoginPage() {
       <main className="z-10 w-full max-w-md my-8">
         <div className="bg-neutral-900/60 backdrop-blur-xl border border-neutral-800 rounded-[2.5rem] p-6 md:p-10 flex flex-col items-center text-center shadow-2xl transition-all">
           {/* Logo */}
-          <DitiroIcon className="w-14 h-14 md:w-16 md:h-16 text-[#e05012] mb-4" />
+          <DitiroIcon className="w-14 h-14 md:w-16 md:h-16 text-[#E35824] mb-4" />
 
           {/* Text Content */}
           <h1 className="text-2xl md:text-3xl font-bold mb-1 tracking-tight">Welcome to Ditiro.</h1>
@@ -136,7 +136,7 @@ export default function LoginPage() {
             <button
               onClick={handleGoogleSignIn}
               disabled={isProcessing}
-              className="w-full bg-[#e05012] hover:bg-[#ff5f1f] text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70 text-sm"
+              className="w-full bg-[#E35824] hover:bg-[#E35824]/90 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70 text-sm shadow-md shadow-[#E35824]/20"
             >
               <GoogleIcon className="w-5 h-5 text-white" />
               {isProcessing ? "Processing..." : "Continue with Google"}
@@ -167,7 +167,7 @@ export default function LoginPage() {
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-neutral-950/80 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#e05012] transition-colors"
+                  className="w-full bg-neutral-950/80 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#E35824] transition-colors"
                 />
               </div>
 
@@ -181,7 +181,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-neutral-950/80 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#e05012] transition-colors"
+                  className="w-full bg-neutral-950/80 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-[#E35824] transition-colors"
                 />
               </div>
 
@@ -204,7 +204,7 @@ export default function LoginPage() {
               className="text-xs text-neutral-400 hover:text-white transition-colors"
             >
               {isSignUp ? "Already have an account? " : "Don't have an account? "}
-              <span className="text-[#e05012] font-semibold">
+              <span className="text-[#E35824] font-semibold">
                 {isSignUp ? "Sign In" : "Sign Up"}
               </span>
             </button>
@@ -241,7 +241,7 @@ export default function LoginPage() {
           <div className="w-full max-w-lg bg-neutral-900 border border-neutral-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-2 duration-500">
             <div className="p-8">
               <h2 className="text-xl font-bold mb-3 flex items-center gap-2">
-                <DitiroIcon className="w-6 h-6 text-[#e05012]" />
+                <DitiroIcon className="w-6 h-6 text-[#E35824]" />
                 Why sign up?
               </h2>
               <p className="text-neutral-400">
@@ -264,7 +264,7 @@ export default function LoginPage() {
               <button
                 onClick={handleGoogleSignIn}
                 disabled={isProcessing}
-                className="w-full bg-[#e05012] hover:bg-[#ff5f1f] text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70"
+                className="w-full bg-[#E35824] hover:bg-[#E35824]/90 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-70 shadow-md shadow-[#E35824]/20"
               >
                 <GoogleIcon className="w-5 h-5 text-white" />
                 {isProcessing ? "Processing..." : "Continue with Google"}

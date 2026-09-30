@@ -94,21 +94,21 @@ export default function ProposalCard({
               onClick={() => task.id && onOpenTask?.(task.id)}
               className="flex items-center gap-3 p-3 rounded-xl border border-neutral-800 bg-neutral-900/40 hover:bg-neutral-800/80 cursor-pointer group transition-all"
             >
-              <div className="w-6 h-6 rounded-full bg-[#e05012]/10 text-[#e05012] flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-full bg-[#E35824]/10 text-[#E35824] flex items-center justify-center shrink-0">
                 <Check size={14} strokeWidth={3} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-bold text-neutral-100 group-hover:text-[#e05012] transition-colors truncate">
+                <div className="text-sm font-bold text-neutral-100 group-hover:text-[#E35824] transition-colors truncate">
                   {task.title}
                 </div>
                 {(task.dateTime || task.location) && (
                   <div className="text-[10px] font-bold text-neutral-500 mt-1 flex gap-2">
-                    {task.dateTime && <span className="flex items-center gap-1"><Clock size={10} className="text-[#e05012]" /> {task.dateTime}</span>}
-                    {task.location && <span className="flex items-center gap-1"><MapPin size={10} className="text-[#e05012]" /> {task.location}</span>}
+                    {task.dateTime && <span className="flex items-center gap-1"><Clock size={10} className="text-[#E35824]" /> {task.dateTime}</span>}
+                    {task.location && <span className="flex items-center gap-1"><MapPin size={10} className="text-[#E35824]" /> {task.location}</span>}
                   </div>
                 )}
               </div>
-              <ExternalLink size={14} className="text-neutral-700 group-hover:text-[#e05012] transition-colors" />
+              <ExternalLink size={14} className="text-neutral-700 group-hover:text-[#E35824] transition-colors" />
             </div>
           ))}
         </div>
@@ -116,7 +116,7 @@ export default function ProposalCard({
 
       {/* Pending Proposals Section */}
       {pendingTasks.length > 0 && (
-        <div className="rounded-2xl border border-neutral-700 bg-neutral-900/80 overflow-hidden shadow-xl shadow-[#e05012]/10">
+        <div className="rounded-2xl border border-neutral-700 bg-neutral-900/80 overflow-hidden shadow-xl shadow-[#E35824]/10">
           <div className="bg-neutral-800/50 px-4 py-2.5 border-b border-neutral-700 flex justify-between items-center">
             <h3 className="font-bold text-neutral-300 text-[11px] uppercase tracking-wider">New Action Items</h3>
             <span className="text-[10px] text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded-full">{pendingTasks.length} pending</span>
@@ -151,7 +151,7 @@ export default function ProposalCard({
                   <div className="flex gap-2 mt-4">
                     <button 
                       onClick={() => handleAcceptOne(i)} 
-                      className="flex-1 py-1.5 rounded-lg bg-[#e05012] hover:bg-[#e05012]/90 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95"
+                      className="flex-1 py-1.5 rounded-lg bg-[#E35824] hover:bg-[#E35824]/90 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95"
                     >
                       <Check size={14} strokeWidth={2.5} /> Accept
                     </button>
@@ -171,7 +171,7 @@ export default function ProposalCard({
             <div className="p-3 border-t border-neutral-700 flex gap-2">
               <button 
                 onClick={handleAcceptAll} 
-                className="flex-1 bg-[#e05012]/20 hover:bg-[#e05012]/30 text-[#e05012] border border-[#e05012]/30 rounded-lg py-2 text-[11px] font-bold transition-all"
+                className="flex-1 bg-[#E35824]/20 hover:bg-[#E35824]/30 text-[#E35824] border border-[#E35824]/30 rounded-lg py-2 text-[11px] font-bold transition-all"
               >
                 Accept All {pendingTasks.length}
               </button>
@@ -191,7 +191,7 @@ export default function ProposalCard({
         <div className="pt-2 flex items-center justify-center gap-2 opacity-40">
           <div className="h-px bg-neutral-800 flex-1" />
           <div className="flex items-center gap-1.5">
-            <Check size={12} className="text-#e05012" />
+            <Check size={12} className="text-[#E35824]" />
             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-tighter">Tasks Synced</span>
           </div>
           <div className="h-px bg-neutral-800 flex-1" />

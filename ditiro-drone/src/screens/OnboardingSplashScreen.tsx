@@ -53,7 +53,7 @@ const SLIDES: SlideItem[] = [
     title: 'Your Mobile Task Drone',
     description:
       'A dedicated mobile companion designed to rapidly capture deeds on the fly and keep your daily operations seamlessly aligned.',
-    icon: <Rocket size={16} color="#D48C2B" />,
+    icon: <Rocket size={16} color={COLORS.proteaOrange} />,
   },
   {
     id: 2,
@@ -77,7 +77,7 @@ const SLIDES: SlideItem[] = [
     title: 'Real-Time Web Sync',
     description:
       'Complete tasks on mobile and watch them reflect instantly across your desktop web app. One unified ecosystem in complete flow.',
-    icon: <Sparkles size={16} color="#D48C2B" />,
+    icon: <Sparkles size={16} color={COLORS.proteaOrange} />,
   },
 ];
 
@@ -122,7 +122,7 @@ export const OnboardingSplashScreen: React.FC<OnboardingSplashScreenProps> = ({ 
         <View style={styles.topBar}>
           <View style={styles.phaseIndicator}>
             <View style={styles.phaseDot} />
-            <Text style={styles.phaseText}>DRONE SCOUT 1.0</Text>
+            <Text style={styles.phaseText}>DRONE SCOUT 1.1</Text>
           </View>
 
           <TouchableOpacity
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#D48C2B',
+    backgroundColor: COLORS.proteaOrange,
     marginRight: 6,
   },
   phaseText: {
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   badgeLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#D48C2B',
+    color: COLORS.sunGold,
     letterSpacing: 1.2,
   },
   slideTitle: {
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 26,
-    backgroundColor: '#D48C2B',
+    backgroundColor: COLORS.proteaOrange,
   },
   inactiveDot: {
     width: 8,
@@ -374,19 +374,19 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D48C2B',
+    backgroundColor: COLORS.proteaOrange,
     paddingVertical: 11,
     paddingHorizontal: 18,
     borderRadius: 14,
-    shadowColor: '#D48C2B',
+    shadowColor: COLORS.proteaOrange,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
   },
   actionButtonFinal: {
-    backgroundColor: '#E05012',
-    shadowColor: '#E05012',
+    backgroundColor: COLORS.proteaOrange,
+    shadowColor: COLORS.proteaOrange,
     paddingHorizontal: 20,
   },
   actionButtonText: {

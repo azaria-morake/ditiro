@@ -2,7 +2,7 @@
   "expo": {
     "name": "Ditiro Drone",
     "slug": "ditiro-drone",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -19,7 +19,7 @@
         "expo-notifications",
         {
           "icon": "./assets/drone-icon.png",
-          "color": "#D48C2B"
+          "color": "#E35824"
         }
       ],
       "@react-native-google-signin/google-signin"
@@ -36,15 +36,16 @@
     },
     "android": {
       "package": "com.ditiro.drone",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "useNextNotificationsApi": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#EAA524"
+        "backgroundColor": "#E35824"
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/drone-icon.png"
     },
     "scheme": "ditiro-drone",
     "extra": {

@@ -189,12 +189,12 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                         <button onClick={handleToggleParentTask} 
                                 className={clsx(
                                     "mt-1 w-6 h-6 rounded-lg flex items-center justify-center border transition-all duration-300 shrink-0",
-                                    task.status === 'completed' ? "bg-[#e05012] border-[#e05012] text-neutral-900" : "border-neutral-600 hover:border-[#e05012]"
+                                    task.status === 'completed' ? "bg-[#E35824] border-[#E35824] text-neutral-900" : "border-neutral-600 hover:border-[#E35824]"
                                 )}>
                             {task.status === 'completed' && <Check size={16} strokeWidth={3} />}
                         </button>
                         <div className="flex-1 min-w-0 flex flex-col">
-                            <div className="text-[10px] font-bold text-[#e05012] uppercase tracking-[0.2em] mb-1">Task Details</div>
+                            <div className="text-[10px] font-bold text-[#E35824] uppercase tracking-[0.2em] mb-1">Task Details</div>
                             <h2 className={clsx(
                                 "text-2xl font-bold truncate transition-all duration-300",
                                 task.status === 'completed' ? "text-neutral-500 line-through" : "text-white"
@@ -204,14 +204,14 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                             <div className="flex flex-wrap items-center gap-3 mt-2.5 text-[11px] font-bold uppercase tracking-wider">
                                 <div className={clsx(
                                     "px-2 py-0.5 rounded-full border",
-                                    task.status === 'completed' ? "border-neutral-700 text-neutral-600" : "border-[#e05012]/30 text-[#e05012] bg-[#e05012]/5"
+                                    task.status === 'completed' ? "border-neutral-700 text-neutral-600" : "border-[#E35824]/30 text-[#E35824] bg-[#E35824]/5"
                                 )}>
                                     {totalSubs > 0 ? `${completedSubs}/${totalSubs} TASKS DONE` : "NO SUBTASKS"}
                                 </div>
                                 
                                 {task.dueDate && !editingParent && (
                                     <div className="flex items-center gap-1.5 text-neutral-300">
-                                        <Clock size={12} className="text-[#e05012]" /> {task.dueDate} {task.dueTime}
+                                        <Clock size={12} className="text-[#E35824]" /> {task.dueDate} {task.dueTime}
                                     </div>
                                 )}
                                 
@@ -238,8 +238,8 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                     try { (dateInputRef.current as any)?.showPicker(); } catch(e) { dateInputRef.current?.focus(); }
                                 }}
                             >
-                                <div className="flex items-center gap-3 p-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-xs font-bold text-neutral-400 group-hover:border-[#e05012]/50 transition-all">
-                                    <Clock size={16} className="text-[#e05012]" />
+                                <div className="flex items-center gap-3 p-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-xs font-bold text-neutral-400 group-hover:border-[#E35824]/50 transition-all">
+                                    <Clock size={16} className="text-[#E35824]" />
                                     <span>{parentTargetDate || "Pick Date"}</span>
                                 </div>
                                 <input 
@@ -257,8 +257,8 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                     try { (timeInputRef.current as any)?.showPicker(); } catch(e) { timeInputRef.current?.focus(); }
                                 }}
                             >
-                                <div className="flex items-center gap-3 p-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-xs font-bold text-neutral-400 group-hover:border-[#e05012]/50 transition-all">
-                                    <Clock size={16} className="text-[#e05012]" />
+                                <div className="flex items-center gap-3 p-3.5 bg-neutral-900 border border-neutral-700 rounded-2xl text-xs font-bold text-neutral-400 group-hover:border-[#E35824]/50 transition-all">
+                                    <Clock size={16} className="text-[#E35824]" />
                                     <span>{parentTargetTime || "Pick Time"}</span>
                                 </div>
                                 <input 
@@ -270,7 +270,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                 />
                             </div>
                         </div>
-                        <button onClick={() => handleSaveParentDelay(task.dueDate, task.dueTime)} className="w-full bg-[#e05012] hover:bg-[#e05012]/90 text-white rounded-[1.5rem] py-4 text-sm font-bold shadow-lg shadow-[#e05012]/20 transition-all active:scale-[0.98]">
+                        <button onClick={() => handleSaveParentDelay(task.dueDate, task.dueTime)} className="w-full bg-[#E35824] hover:bg-[#E35824]/90 text-white rounded-[1.5rem] py-4 text-sm font-bold shadow-lg shadow-[#E35824]/20 transition-all active:scale-[0.98]">
                             Save Reschedule
                         </button>
                     </div>
@@ -290,7 +290,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                         <button onClick={() => handleToggleSubtask(sub.id, sub.completed)} 
                                                 className={clsx(
                                                     "mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border transition-all duration-300 shrink-0",
-                                                    sub.completed ? "bg-[#e05012] border-[#e05012] text-neutral-900" : "border-neutral-600 hover:border-[#e05012]"
+                                                    sub.completed ? "bg-[#E35824] border-[#E35824] text-neutral-900" : "border-neutral-600 hover:border-[#E35824]"
                                                 )}>
                                             {sub.completed && <Check size={14} strokeWidth={3} />}
                                         </button>
@@ -306,7 +306,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                             setNewTargetTime(sub.dueTime || "");
                                         }} className={clsx(
                                             "p-1.5 rounded-lg transition-all",
-                                            editingSubtask === sub.id ? "bg-[#e05012] text-neutral-900" : "text-neutral-500 hover:text-white hover:bg-neutral-800"
+                                            editingSubtask === sub.id ? "bg-[#E35824] text-neutral-900" : "text-neutral-500 hover:text-white hover:bg-neutral-800"
                                         )}>
                                             <Clock size={15} />
                                         </button>
@@ -321,8 +321,8 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                                         try { (subDateRefs.current[sub.id] as any)?.showPicker(); } catch(e) { subDateRefs.current[sub.id]?.focus(); }
                                                     }}
                                                 >
-                                                    <div className="flex items-center gap-2 p-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-[10px] font-bold text-neutral-400 group-hover:border-[#e05012]/50 transition-all">
-                                                        <Clock size={12} className="text-[#e05012]" />
+                                                    <div className="flex items-center gap-2 p-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-[10px] font-bold text-neutral-400 group-hover:border-[#E35824]/50 transition-all">
+                                                        <Clock size={12} className="text-[#E35824]" />
                                                         <span>{newTargetDate || "Date"}</span>
                                                     </div>
                                                     <input 
@@ -336,8 +336,8 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                                         try { (subTimeRefs.current[sub.id] as any)?.showPicker(); } catch(e) { subTimeRefs.current[sub.id]?.focus(); }
                                                     }}
                                                 >
-                                                    <div className="flex items-center gap-2 p-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-[10px] font-bold text-neutral-400 group-hover:border-[#e05012]/50 transition-all">
-                                                        <Clock size={12} className="text-[#e05012]" />
+                                                    <div className="flex items-center gap-2 p-2.5 bg-neutral-900 border border-neutral-700 rounded-xl text-[10px] font-bold text-neutral-400 group-hover:border-[#E35824]/50 transition-all">
+                                                        <Clock size={12} className="text-[#E35824]" />
                                                         <span>{newTargetTime || "Time"}</span>
                                                     </div>
                                                     <input 
@@ -346,7 +346,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                                                     />
                                                 </div>
                                             </div>
-                                            <button onClick={() => handleSaveDelay(sub.id, sub.dueDate)} className="w-full bg-[#e05012] hover:bg-[#e05012]/90 text-white rounded-xl py-3 text-[11px] font-bold transition-all active:scale-[0.98]">
+                                            <button onClick={() => handleSaveDelay(sub.id, sub.dueDate)} className="w-full bg-[#E35824] hover:bg-[#E35824]/90 text-white rounded-xl py-3 text-[11px] font-bold transition-all active:scale-[0.98]">
                                                 Update Subtask
                                             </button>
                                         </div>
@@ -354,7 +354,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
 
                                     {(sub.dueDate || sub.dueTime) && editingSubtask !== sub.id && (
                                         <div className="pl-9 mt-1.5 text-[10px] text-neutral-500 flex items-center gap-1.5 font-bold uppercase tracking-tight">
-                                            <Clock size={10} className="text-[#e05012]" /> {sub.dueDate} {sub.dueTime}
+                                            <Clock size={10} className="text-[#E35824]" /> {sub.dueDate} {sub.dueTime}
                                         </div>
                                     )}
                                 </div>
@@ -377,7 +377,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                         <button 
                             onClick={handleAddManualSubtask}
                             disabled={!newSubtaskText.trim()}
-                            className="text-[#e05012] hover:text-white disabled:opacity-20 p-1.5 transition-all active:scale-90"
+                            className="text-[#E35824] hover:text-white disabled:opacity-20 p-1.5 transition-all active:scale-90"
                         >
                             <Plus size={22} />
                         </button>
@@ -394,7 +394,7 @@ export default function TaskCard({ taskId, onClose }: TaskCardProps) {
                     <button onClick={() => {
                         onClose();
                         if (task.chatId) router.push(`/?c=${task.chatId}`);
-                    }} className="w-full font-bold bg-neutral-700 hover:bg-[#e05012]/10 hover:text-[#e05012] text-white p-4 rounded-[1.5rem] flex items-center justify-center gap-3 transition-all duration-300 shadow-xl active:scale-[0.98]">
+                    }} className="w-full font-bold bg-neutral-700 hover:bg-[#E35824]/10 hover:text-[#E35824] text-white p-4 rounded-[1.5rem] flex items-center justify-center gap-3 transition-all duration-300 shadow-xl active:scale-[0.98]">
                         Open in Chat <MessageSquare size={18} />
                     </button>
                 </div>

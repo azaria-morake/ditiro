@@ -18,7 +18,8 @@ import {
   signInAnonymously,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithCredential
+  signInWithCredential,
+  browserPopupRedirectResolver
 } from 'firebase/auth';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
 import { auth } from '../services/firebase';
@@ -33,6 +34,7 @@ import {
   AlertCircle
 } from 'lucide-react-native';
 import { GoogleIcon } from '../components/GoogleIcon';
+import DitiroMonoSvg from '../../assets/ditiro-mono.svg';
 
 interface LoginScreenProps {
   onLoginSuccess?: () => void;
@@ -117,7 +119,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onOpenOnboarding }) =>
     try {
       if (Platform.OS === 'web' && typeof signInWithPopup === 'function') {
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        await signInWithPopup(auth, provider, browserPopupRedirectResolver);
       } else {
         await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
         const response = await GoogleSignin.signIn();
@@ -166,11 +168,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onOpenOnboarding }) =>
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
+
           {/* Header & Logo */}
           <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <Rocket size={32} color={COLORS.primaryAccent} />
+            <View >
+              <DitiroMonoSvg width={60} height={72} color={COLORS.proteaOrange} fill={COLORS.proteaOrange} />
             </View>
             <Text style={styles.title}>Welcome to Ditiro</Text>
             <Text style={styles.subtitle}>Mobile Drone & Task Synchronization Layer</Text>

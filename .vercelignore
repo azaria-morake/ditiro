@@ -1,0 +1,36 @@
+# Mobile app (React Native / Expo / Android builds)
+ditiro-drone/
+
+# Version control & internal tools
+.git/
+.github/
+.ditiro
+gemini-snapshot
+
+# Dependencies
+node_modules/
+
+# Next.js build cache & outputs
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Documentation & scratch files
+docs/
+test-llm.ts
+
+# Firebase config
+firebase.json
+firestore.rules
+
+# Environment variables (configure in Vercel dashboard instead)
+.env*.local
+.env.development
+.env.test
+.env.production
+.env
+
+# OS / Editor files
+.DS_Store
+Thumbs.db

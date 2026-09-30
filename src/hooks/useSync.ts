@@ -82,6 +82,11 @@ export const useSync = () => {
         
         // Final pass: clean up duplicates after migration/sync
         await deduplicateTasks(uid);
+
+        // Daily Routine: Prune expired past prayers and ensure today's 5 prayer deeds exist
+        import('@/lib/prayers/prayerService').then(({ syncDailyPrayerRoutine }) => {
+          syncDailyPrayerRoutine(uid);
+        });
       } catch (err) {
         console.error("[useSync] Migration error:", err);
       }

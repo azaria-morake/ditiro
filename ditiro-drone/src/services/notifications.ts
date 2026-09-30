@@ -29,7 +29,7 @@ export async function ensureNotificationChannel(): Promise<void> {
       name: 'Ditiro Task Alerts',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#D48C2B',
+      lightColor: '#E35824',
       sound: 'default',
     });
   }
@@ -171,6 +171,7 @@ export async function registerForPushNotificationsAsync(userId?: string): Promis
 }
 
 export async function setupBackgroundSyncTasks() {
+  if (Platform.OS === 'web') return;
   try {
     const isFetchRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
     if (!isFetchRegistered) {
@@ -187,6 +188,7 @@ export async function setupBackgroundSyncTasks() {
 }
 
 export async function unregisterBackgroundSyncTasks() {
+  if (Platform.OS === 'web') return;
   try {
     const isFetchRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_FETCH_TASK);
     if (isFetchRegistered) {

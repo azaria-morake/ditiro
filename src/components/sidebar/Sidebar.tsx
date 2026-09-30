@@ -154,7 +154,7 @@ export default function Sidebar() {
         )}
       >
         <div className="relative flex min-h-[96px] items-center justify-center border-b border-neutral-800 px-4">
-          <DitiroBanner className="h-10 w-48 text-[#e05012]" />
+          <DitiroBanner className="h-10 w-48 text-[#E35824]" />
           <button className="absolute right-4 top-1/2 -translate-y-1/2 md:hidden p-2" onClick={() => setSidebarOpen(false)}>
             <X size={20} />
           </button>
@@ -193,7 +193,7 @@ export default function Sidebar() {
             <>
               <button
                 onClick={() => { setActiveChatId(null); router.push('/'); setSidebarOpen(false); }}
-                className="w-full text-center p-3 rounded-lg bg-[#e05012] hover:bg-[#e05012]/90 transition-colors font-medium mb-2 text-sm"
+                className="w-full text-center p-3 rounded-lg bg-[#E35824] hover:bg-[#E35824]/90 transition-colors font-medium mb-2 text-sm shadow-sm shadow-[#E35824]/10"
               >
                 + New Conversation
               </button>
@@ -201,7 +201,7 @@ export default function Sidebar() {
               {chats?.map(chat => (
                 <div key={chat.id} className={clsx(
                   "group flex items-center justify-between p-3 flex-shrink-0 rounded-lg border transition-colors cursor-pointer text-sm mb-1",
-                  activeChatId === chat.id ? "bg-neutral-800 border-[#e05012]" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
+                  activeChatId === chat.id ? "bg-neutral-800 border-[#E35824]" : "bg-neutral-900 border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
                 )} onClick={() => { setActiveChatId(chat.id); router.push('/?c=' + chat.id); setSidebarOpen(false); }}>
                   <div className="truncate pr-2 w-full flex items-center">
                     <span className="mr-2 text-lg">{chat.emoji || '💬'}</span>
@@ -221,7 +221,7 @@ export default function Sidebar() {
             <>
               <button
                 onClick={() => { router.push(activeChatId ? `/?c=${activeChatId}&n=1` : `/?n=1`); setSidebarOpen(false); }}
-                className="w-full text-center p-3 rounded-lg bg-[#e05012] hover:bg-[#e05012]/90 transition-colors font-medium mb-2 text-sm"
+                className="w-full text-center p-3 rounded-lg bg-[#E35824] hover:bg-[#E35824]/90 transition-colors font-medium mb-2 text-sm shadow-sm shadow-[#E35824]/10"
               >
                 + Add New Task
               </button>

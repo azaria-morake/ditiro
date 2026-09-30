@@ -38,14 +38,14 @@ export const LoadingScreen = ({ onFinished }: LoadingScreenProps) => {
       <div className="z-10 flex flex-col items-center text-center px-6">
         {/* Animated Glow behind Logo */}
         <div className="relative mb-12">
-            <div className="absolute inset-0 bg-[#e05012] blur-[80px] opacity-20 animate-pulse" />
-            <DitiroIcon className="w-24 h-24 text-[#e05012] relative" />
+            <div className="absolute inset-0 bg-[#E35824] blur-[80px] opacity-25 animate-pulse" />
+            <DitiroIcon className="w-24 h-24 text-[#E35824] relative" />
         </div>
 
         {/* Progress Bar Container */}
         <div className="w-64 h-1.5 bg-neutral-900 rounded-full overflow-hidden mb-10 relative border border-neutral-800">
             <div 
-                className="h-full bg-gradient-to-r from-[#ac3e0e] to-[#e05012] transition-all duration-[2500ms] ease-out shadow-[0_0_15px_rgba(224,80,18,0.5)]"
+                className="h-full bg-gradient-to-r from-[#E35824] to-[#F5AF28] transition-all duration-[2500ms] ease-out shadow-[0_0_15px_rgba(227,88,36,0.5)]"
                 style={{ width: `${progress}%` }}
             />
         </div>

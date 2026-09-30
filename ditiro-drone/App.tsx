@@ -2,6 +2,7 @@ import './src/services/cryptoPolyfill';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth } from './src/services/firebase';
@@ -32,31 +33,29 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  if (authChecking) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={COLORS.primaryAccent} />
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" backgroundColor={COLORS.background} />
-      {user ? (
-        <HomeScreen
-          user={user}
-          onSignOut={() => {
-            setUser(null);
-            setShowSplash(false);
-          }}
-        />
-      ) : showSplash ? (
-        <OnboardingSplashScreen onFinish={() => setShowSplash(false)} />
-      ) : (
-        <LoginScreen onOpenOnboarding={() => setShowSplash(true)} />
-      )}
-    </View>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+      <View style={styles.container}>
+        <StatusBar style="light" backgroundColor={COLORS.background} />
+        {authChecking ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color={COLORS.primaryAccent} />
+          </View>
+        ) : user ? (
+          <HomeScreen
+            user={user}
+            onSignOut={() => {
+              setUser(null);
+              setShowSplash(false);
+            }}
+          />
+        ) : showSplash ? (
+          <OnboardingSplashScreen onFinish={() => setShowSplash(false)} />
+        ) : (
+          <LoginScreen onOpenOnboarding={() => setShowSplash(true)} />
+        )}
+      </View>
+    </SafeAreaProvider>
   );
 }
 

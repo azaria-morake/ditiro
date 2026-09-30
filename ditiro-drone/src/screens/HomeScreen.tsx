@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,7 +10,8 @@ import {
   ActivityIndicator,
   TextInput,
   Alert,
-  Platform
+  Platform,
+  Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalendarClockModal } from '../components/CalendarClockModal';
@@ -40,8 +41,8 @@ import {
   unregisterBackgroundSyncTasks
 } from '../services/notifications';
 import { auth } from '../services/firebase';
+import DitiroMonoSvg from '../../assets/ditiro-mono.svg';
 import {
-  Rocket,
   LogOut,
   Bell,
   BellRing,
@@ -59,13 +60,25 @@ import {
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  ArrowLeftRight
+  ArrowLeftRight,
+  Lightbulb
 } from 'lucide-react-native';
 
 interface HomeScreenProps {
   user: any;
   onSignOut?: () => void;
 }
+
+const DRONE_TIPS = [
+  'Tap any deed to edit its title, date, or time.',
+  'Toggle the switch to mute or activate background alarms for a deed.',
+  'Tap the circle checkbox on the left to mark a deed as completed.',
+  'Tap Scout Active above to force-sync immediately with web Ditiro.',
+  'Filter deeds anytime by Active, Overdue, or Completed above.',
+  'Tap the trash icon to permanently remove a deed from your workspace.',
+  'Configure your advance reminder lead times in System Controls.',
+  'Background scout monitors your deeds even when the app is closed.',
+];
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
   const [loading, setLoading] = useState(true);
@@ -80,6 +93,52 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
   const [filter, setFilter] = useState<'active' | 'overdue' | 'completed'>('active');
   const [taskPage, setTaskPage] = useState(1);
   const TASKS_PER_PAGE = 10;
+
+  // Rotating Tips State
+  const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const tipOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      Animated.sequence([
+        Animated.timing(tipOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(tipOpacity, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      setTimeout(() => {
+        setCurrentTipIndex((prev) => (prev + 1) % DRONE_TIPS.length);
+      }, 300);
+    }, 7000);
+
+    return () => clearInterval(timer);
+  }, [tipOpacity]);
+
+  const handleNextTip = () => {
+    Animated.sequence([
+      Animated.timing(tipOpacity, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(tipOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setTimeout(() => {
+      setCurrentTipIndex((prev) => (prev + 1) % DRONE_TIPS.length);
+    }, 150);
+  };
 
   useEffect(() => {
     setTaskPage(1);
@@ -551,9 +610,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
         <View style={styles.headerTitleRow}>
           <View style={{ flex: 1 }}>
             <View style={styles.badgeRow}>
-              <Rocket size={14} color={COLORS.success} />
-              <View style={styles.activeDot} />
-              <Text style={styles.badgeText}>SCOUT ACTIVE</Text>
+              <DitiroMonoSvg width={14} height={16} color={COLORS.proteaOrange} fill={COLORS.proteaOrange} />
+              <View style={styles.badgePill}>
+                <Text style={styles.badgeText}>SCOUT ACTIVE</Text>
+              </View>
             </View>
             <Text style={styles.title}>DITIRO DRONE</Text>
             <Text style={styles.subtitle}>Mobile Native Capture & Alert Layer</Text>
@@ -1130,8 +1190,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                 tab === 'active'
                   ? activeCount
                   : tab === 'overdue'
-                  ? overdueCount
-                  : completedCount;
+                    ? overdueCount
+                    : completedCount;
 
               return (
                 <TouchableOpacity
@@ -1160,15 +1220,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                 {filter === 'completed'
                   ? 'No Completed Deeds Yet'
                   : filter === 'overdue'
-                  ? 'No Overdue Deeds'
-                  : 'No Active Tasks Found'}
+                    ? 'No Overdue Deeds'
+                    : 'No Active Tasks Found'}
               </Text>
               <Text style={styles.emptySubtitle}>
                 {filter === 'completed'
                   ? 'Check off deeds above to mark them as completed!'
                   : filter === 'overdue'
-                  ? 'No past-due deeds require your immediate attention.'
-                  : 'Tasks created here or in Ditiro Web will automatically sync in real-time.'}
+                    ? 'No past-due deeds require your immediate attention.'
+                    : 'Tasks created here or in Ditiro Web will automatically sync in real-time.'}
               </Text>
             </View>
           ) : (
@@ -1202,6 +1262,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                             styles.taskTitle,
                             task.status === 'completed' && styles.taskTitleCompleted
                           ]}
+                          numberOfLines={1}
                         >
                           {task.title}
                         </Text>
@@ -1214,10 +1275,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                       </View>
                       <View style={styles.taskMetaRow}>
                         <Calendar size={12} color={isOverdue ? '#EF4444' : COLORS.mutedText} />
-                        <Text style={[styles.taskMeta, isOverdue && styles.taskMetaOverdue]}>
+                        <Text
+                          style={[styles.taskMeta, isOverdue && styles.taskMetaOverdue]}
+                          numberOfLines={1}
+                        >
                           Due: {task.dueDate} at {task.dueTime}
                         </Text>
-                        <Text style={styles.taskTapEditHint}>• Tap to edit</Text>
                       </View>
                     </TouchableOpacity>
 
@@ -1226,6 +1289,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
                       <TouchableOpacity
                         style={styles.taskDeleteButton}
                         onPress={() => handleDeleteTask(task.id)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
                         <Trash2 size={16} color={COLORS.mutedText} />
                       </TouchableOpacity>
@@ -1273,6 +1337,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ user, onSignOut }) => {
               )}
             </>
           )}
+
+          {/* Rotating Drone Tips Footer */}
+          <TouchableOpacity
+            style={styles.tipBannerContainer}
+            activeOpacity={0.75}
+            onPress={handleNextTip}
+          >
+            <View style={styles.tipIconBadge}>
+              <Lightbulb size={12} color={COLORS.primaryAccent} />
+            </View>
+            <Animated.Text
+              style={[styles.tipBannerText, { opacity: tipOpacity }]}
+              numberOfLines={2}
+            >
+              {DRONE_TIPS[currentTipIndex]}
+            </Animated.Text>
+          </TouchableOpacity>
         </View>
 
         {/* Future Extension: Hands-Free Voice Capture Slot */}
@@ -1363,21 +1444,27 @@ const styles = StyleSheet.create({
   badgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 7,
     marginBottom: SPACING.xs,
   },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.success,
-    marginLeft: 6,
-    marginRight: 6,
+  badgePill: {
+    backgroundColor: COLORS.proteaOrange,
+    paddingHorizontal: 8,
+    height: 18,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeText: {
-    color: COLORS.success,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
+    color: COLORS.sunGold,
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    lineHeight: 11,
+    includeFontPadding: false,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    transform: [{ translateY: 0.75 }],
   },
   title: {
     color: COLORS.softText,
@@ -1840,6 +1927,7 @@ const styles = StyleSheet.create({
   },
   taskInfo: {
     flex: 1,
+    marginRight: 6,
   },
   taskTitle: {
     color: COLORS.softText,
@@ -1881,19 +1969,38 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '600',
   },
-  taskTapEditHint: {
-    color: COLORS.primaryAccent,
-    fontSize: 11,
-    fontWeight: '500',
-    opacity: 0.8,
-  },
   taskActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   taskDeleteButton: {
     padding: 6,
+  },
+  tipBannerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#25272B',
+  },
+  tipIconBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(234, 165, 36, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipBannerText: {
+    flex: 1,
+    color: COLORS.mutedText,
+    fontSize: 11,
+    fontWeight: '500',
+    lineHeight: 16,
   },
   emptyContainer: {
     paddingVertical: SPACING.lg,

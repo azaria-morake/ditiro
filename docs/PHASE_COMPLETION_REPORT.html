@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase Completion and Technical Report</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #24292e;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  h1, h2, h3 { color: #1f2328; border-bottom: 1px solid #d0d7de; padding-bottom: 8px; }
+  code { background: #f6f8fa; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 85%; }
+  pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+  th, td { border: 1px solid #d0d7de; padding: 8px 12px; text-align: left; }
+  th { background: #f6f8fa; }
+  a { color: #0969da; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>Phase Completion and Technical Reporting</h1>
+<h2>Software Phase Completion Report</h2>
+<p><strong>Project:</strong> Ditiro Ecosystem (Web App &amp; Ditiro Drone Mobile Native Client)<br />
+<strong>Phase:</strong> MVP Release — Mobile Native Android App, Cloud Sync, &amp; Emulation Environment<br />
+<strong>Date:</strong> September 29, 2026<br />
+<strong>Author:</strong> Antigravity AI Engineering Assistant &amp; Lead Maintainer<br />
+<strong>Repository Branch:</strong> <code>master</code><br />
+<strong>Latest Commit:</strong> <a href="file:///home/azaria/ux-giants/ditiro"><code>f10df1c</code></a></p>
+<hr />
+<h2>1. Phase Overview</h2>
+<h3>1.1 Objectives</h3>
+<p>The primary objective of this phase was to deliver a production-ready Minimum Viable Product (MVP) of <strong>Ditiro Drone</strong>—the mobile native Android companion app for the Ditiro task and deed management platform—while maintaining seamless real-time, encrypted synchronization with the existing Next.js web application.</p>
+<p>Key objectives included:
+1. Transitioning mobile authentication from unsupported Expo Go web popups to native Google Play Services bottom-sheet authentication.
+2. Building an end-to-end encrypted real-time sync layer between Firestore, Dexie (IndexedDB), and the mobile state store.
+3. Enabling full mobile CRUD capabilities for deeds, including interactive status toggling, schedule alterations, and granular alert cadence management.
+4. Implementing a complete, resource-efficient local Android emulation environment on Linux without needing to run Android Studio.
+5. Successfully packaging and distributing standalone Android APK binaries via EAS (Expo Application Services).</p>
+<h3>1.2 Scope</h3>
+<ul>
+<li><strong>In Scope:</strong></li>
+<li>Setup and architecture of <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone"><code>ditiro-drone</code></a> React Native / Expo application.</li>
+<li>Native Google Sign-In SDK integration (<code>@react-native-google-signin/google-signin</code>).</li>
+<li>Account lifecycle management (session persistence, account switching, clean Google authorization revocation, sign-out safety confirmations).</li>
+<li>Bi-directional task status and reminder sync with AES-256 client-side encryption.</li>
+<li>Interactive deed modification modal and animated floating confirmation toast alerts.</li>
+<li>Cloud builds targeting Android standalone preview APKs via EAS.</li>
+<li>Standalone emulator provisioning, hardware acceleration (KVM), and Intel HD Graphics performance tuning.</li>
+<li><strong>Out of Scope (Deferred to Future Phases):</strong></li>
+<li>"Hello Ditiro" voice evocation offline engine.</li>
+<li>iOS standalone builds and Apple Developer provisioning.</li>
+<li>Complex offline conflict resolution algorithms (CRDTs).</li>
+</ul>
+<h3>1.3 Deliverables</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Deliverable</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Ditiro Drone Mobile Client</strong></td>
+<td style="text-align: left;">React Native / Expo application with full deed sync &amp; management</td>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone"><code>/ditiro-drone</code></a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Deed Modification Modal</strong></td>
+<td style="text-align: left;">Bottom sheet modal for adjusting deed title, schedule, status, and alert interval</td>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/components/EditDeedModal.tsx"><code>/ditiro-drone/src/components/EditDeedModal.tsx</code></a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Animated Toast Notification</strong></td>
+<td style="text-align: left;">Floating glassmorphic feedback component</td>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/components/Toast.tsx"><code>/ditiro-drone/src/components/Toast.tsx</code></a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Authentic Google 'G' Icon</strong></td>
+<td style="text-align: left;">Native SVG-rendered official Google brand icon</td>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/components/GoogleIcon.tsx"><code>/ditiro-drone/src/components/GoogleIcon.tsx</code></a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Standalone Emulator Launcher</strong></td>
+<td style="text-align: left;">Optimized launcher for Intel HD Graphics (720p, GPU host, no frame)</td>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/start-emulator.sh"><code>/ditiro-drone/start-emulator.sh</code></a></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Production Cloud Build APK</strong></td>
+<td style="text-align: left;">Signed Android APK artifact (SDK 54, Android API 34)</td>
+<td style="text-align: left;">EAS Artifact URL / <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/ditiro-drone.apk"><code>ditiro-drone.apk</code></a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Technical Inventory</h2>
+<h3>2.1 Technologies &amp; Frameworks</h3>
+<ul>
+<li><strong>Mobile Runtime:</strong> React Native 0.81.5, React 19.1.0, Expo SDK 54 (<code>~54.0.0</code>)</li>
+<li><strong>Web App Runtime:</strong> Next.js 14, React 18 / 19, TypeScript</li>
+<li><strong>Database &amp; Storage:</strong> Firebase Cloud Firestore (v10.12.0), Dexie.js (IndexedDB wrapper)</li>
+<li><strong>Authentication:</strong> Firebase Authentication, Google Play Services Auth (<code>@react-native-google-signin/google-signin</code> v16.1.5)</li>
+<li><strong>Cryptography:</strong> CryptoJS (AES-256-CBC with SHA-256 derived keys and zero-padding)</li>
+<li><strong>Hardware Acceleration:</strong> Linux KVM (<code>/dev/kvm</code>), QEMU x86_64, Intel Mesa OpenGL (<code>iris</code>/<code>i965</code>)</li>
+<li><strong>Build &amp; CI/CD Tooling:</strong> Expo Application Services (EAS CLI v16+), Android SDK Platform Tools (v36/37)</li>
+</ul>
+<h3>2.2 Core Modules &amp; Components</h3>
+<pre><code>ditiro/
+├── src/
+│   ├── hooks/
+│   │   └── useSync.ts                  # Web Firestore real-time listener &amp; Dexie sync
+│   └── lib/
+│       ├── dexie.ts                    # IndexedDB schema for Tasks, Chats, Messages
+│       ├── encryption.ts               # AES-256-CBC client-side encryption module
+│       └── firebase.ts                 # Web Firebase initialization
+└── ditiro-drone/
+    ├── App.tsx                         # Mobile entry point &amp; Auth state subscription
+    ├── eas.json                        # EAS build profiles (preview, production)
+    ├── google-services.json            # Google Services config with EAS &amp; Debug SHA-1s
+    ├── start-emulator.sh               # Standalone Intel-optimized AVD launcher
+    └── src/
+        ├── components/
+        │   ├── CalendarClockModal.tsx  # Custom zero-native-dependency date/time picker
+        │   ├── EditDeedModal.tsx       # Interactive task edit modal sheet
+        │   ├── GoogleIcon.tsx          # Multi-colored SVG Google &quot;G&quot; icon
+        │   └── Toast.tsx               # Floating animated notification toast
+        ├── constants/
+        │   └── theme.ts                # Design tokens (Colors, Spacing, Typography)
+        ├── screens/
+        │   ├── HomeScreen.tsx          # Main deed dashboard, session card, &amp; filters
+        │   └── LoginScreen.tsx         # Google &amp; Email/Password authentication screen
+        └── services/
+            ├── cryptoPolyfill.ts       # React Native crypto.getRandomValues polyfill
+            ├── droneSync.ts            # Mobile Firestore task listener, CRUD &amp; encryption
+            ├── encryption.ts           # Mobile AES-256-CBC encryption service
+            ├── firebase.ts             # Mobile Firebase app &amp; Firestore initialization
+            └── notifications.ts        # Expo notifications &amp; background task workers
+</code></pre>
+<hr />
+<h2>3. Implementation Details</h2>
+<h3>3.1 Native Google Authentication Pipeline</h3>
+<ol>
+<li><strong>SDK Initialization</strong>: In <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/screens/LoginScreen.tsx"><code>LoginScreen.tsx</code></a>, <code>GoogleSignin.configure()</code> is executed on mount with the web client ID extracted from Firebase (<code>EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID</code>).</li>
+<li><strong>Account Picker Trigger</strong>: On pressing "Continue with Google", the app verifies Google Play Services availability (<code>hasPlayServices</code>) and invokes <code>GoogleSignin.signIn()</code>. This triggers the native Android bottom-sheet account selection dialog (<code>"Choose an account for Ditiro"</code>).</li>
+<li><strong>Firebase Credential Exchange</strong>: The resulting Google <code>idToken</code> is converted into a Firebase credential via <code>GoogleAuthProvider.credential(idToken)</code> and authenticated against Firebase Auth via <code>signInWithCredential</code>.</li>
+<li><strong>Session Clearing</strong>: In <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/screens/HomeScreen.tsx"><code>HomeScreen.tsx</code></a>, logging out calls <code>GoogleSignin.signOut()</code> prior to <code>auth.signOut()</code>, flushing Google Play Services' cached authorization token to enable switching accounts on subsequent logins.</li>
+</ol>
+<h3>3.2 End-to-End Real-Time Sync &amp; Encryption</h3>
+<ol>
+<li><strong>Data Model</strong>: Tasks are stored in Firestore under <code>users/{userId}/tasks/{taskId}</code>.</li>
+<li><strong>Encryption Boundary</strong>: Sensitive fields (<code>title</code>, <code>dueDate</code>, <code>dueTime</code>, <code>remindersEnabled</code>, <code>status</code>, <code>priority</code>) are encrypted using AES-256-CBC using a key derived from the user's UID before writing to Firestore:
+   <code>typescript
+   const encrypted = encryptData(taskPayload, userId);
+   await setDoc(taskRef, { encryptedData: encrypted, status: nextStatus, updatedAt: Date.now() }, { merge: true });</code></li>
+<li><strong>Web Synchronization (<a href="file:///home/azaria/ux-giants/ditiro/src/hooks/useSync.ts"><code>useSync.ts</code></a>)</strong>:</li>
+<li>Web client maintains an <code>onSnapshot</code> listener on <code>users/{uid}/tasks</code>.</li>
+<li>When the mobile app toggles a deed to <code>completed</code>, the document change is received in real-time, decrypted in-memory, and upserted into the browser's local Dexie database.</li>
+<li>The web UI immediately updates without requiring a page reload.</li>
+</ol>
+<h3>3.3 Interactive Deed Modification &amp; Floating Toast</h3>
+<ol>
+<li><strong>Interactive Cards</strong>: Every task card in <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/screens/HomeScreen.tsx"><code>HomeScreen.tsx</code></a> binds an <code>onPress</code> trigger to <code>handleOpenEditModal(task)</code>.</li>
+<li><strong>Modal Sheet (<a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/components/EditDeedModal.tsx"><code>EditDeedModal.tsx</code></a>)</strong>:</li>
+<li>Supports modifying the deed's title, switching status between <code>active</code> and <code>completed</code>, selecting due date presets (<code>Today</code>, <code>Tomorrow</code>, or custom calendar via <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/components/CalendarClockModal.tsx"><code>CalendarClockModal.tsx</code></a>), adjusting due time (<code>09:00</code>, <code>12:00</code>, <code>18:00</code>, <code>23:59</code>, or custom clock), and toggling scout reminder alerts with 15/30/60-minute frequencies.</li>
+<li><strong>Update Pipeline</strong>: On saving, <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/services/droneSync.ts"><code>updateDroneTask</code></a> updates both root metadata and the encrypted payload in Firestore, re-schedules local alarms via Expo Notifications, and displays the animated <a href="file:///home/azaria/ux-giants/ditiro/ditiro-drone/src/components/Toast.tsx"><code>Toast.tsx</code></a> component.</li>
+</ol>
+<h3>3.4 Standalone Linux Android Emulation</h3>
+<p>To run the emulator without the memory overhead of the Android Studio IDE (critical for dual-core, low-VRAM hardware):
+- Installed Android Command-Line Tools (<code>sdkmanager</code>, <code>avdmanager</code>) into <code>~/Android/Sdk/cmdline-tools/latest</code>.
+- Provisioned Android Virtual Device <code>ditiro_drone</code> using Android 14 Google Play x86_64 image (<code>system-images;android-34;google_apis_playstore;x86_64</code>).
+- <strong>Intel HD Graphics Tuning</strong>: Adjusted resolution to 720×1280 (reducing pixel fill rate by ~70%), assigned <code>-gpu host</code> to utilize Mesa hardware drivers, removed phone skin frames, and disabled OS window animations to prevent System UI freezes.
+- <strong>GNOME Unresponsive Dialog Fix</strong>: Disabled Mutter window ping timeout (<code>gsettings set org.gnome.mutter check-alive-timeout 0</code>) and added <code>-no-audio</code> to eliminate PulseAudio thread blocking.</p>
+<hr />
+<h2>4. Bug and Resolution Register</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">ID</th>
+<th style="text-align: left;">Bug Description</th>
+<th style="text-align: left;">Severity</th>
+<th style="text-align: left;">Root Cause</th>
+<th style="text-align: left;">Resolution</th>
+<th style="text-align: left;">Test Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>BUG-001</strong></td>
+<td style="text-align: left;">Google Sign-In displayed <em>"Google Sign-In via web popup is not supported in Expo Go mobile environment..."</em> on APK</td>
+<td style="text-align: left;"><strong>Critical</strong></td>
+<td style="text-align: left;">Hardcoded web-only <code>signInWithPopup</code> check in <code>LoginScreen.tsx</code></td>
+<td style="text-align: left;">Installed <code>@react-native-google-signin/google-signin</code>, configured native Android prebuild plugin, and implemented Google Play Services <code>signIn()</code> flow.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Native bottom sheet prompts on tap.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-002</strong></td>
+<td style="text-align: left;">Google Sign-In failed with <code>DEVELOPER_ERROR (code 10)</code></td>
+<td style="text-align: left;"><strong>Critical</strong></td>
+<td style="text-align: left;">SHA-1 certificate fingerprints from EAS Build Keystore &amp; debug keystore were not registered in Google Cloud / Firebase console.</td>
+<td style="text-align: left;">Generated fingerprints via <code>keytool</code>, added both EAS and debug SHA-1s to Firebase Android App <code>com.ditiro.drone</code>, and refreshed <code>google-services.json</code>.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Google authenticates and exchanges ID token cleanly.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-003</strong></td>
+<td style="text-align: left;">Logging out cached Google credentials; re-tapping Google Sign-In bypassed the account chooser</td>
+<td style="text-align: left;"><strong>Major</strong></td>
+<td style="text-align: left;">Only Firebase <code>auth.signOut()</code> was called; Google Play Services retained the active account token in device memory.</td>
+<td style="text-align: left;">Added <code>GoogleSignin.signOut()</code> inside sign-out handlers before Firebase logout.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Clicking sign-in now re-opens account picker.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-004</strong></td>
+<td style="text-align: left;">Accidental sign-out on touch without confirmation</td>
+<td style="text-align: left;"><strong>Minor</strong></td>
+<td style="text-align: left;">Sign-out buttons directly invoked logout without warning.</td>
+<td style="text-align: left;">Added React Native <code>Alert.alert</code> confirmation modals to both header and card sign-out triggers.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Prevents accidental disconnection.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-005</strong></td>
+<td style="text-align: left;">Inability to edit deeds on mobile</td>
+<td style="text-align: left;"><strong>Major</strong></td>
+<td style="text-align: left;">Task card body was wrapped in a non-interactive <code>&lt;View&gt;</code>, requiring users to visit the web app to edit.</td>
+<td style="text-align: left;">Refactored card into an interactive touchable opening <code>EditDeedModal.tsx</code>, supported by <code>updateDroneTask</code> in <code>droneSync.ts</code>.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Title, dates, times, and alert cadence fully editable.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-006</strong></td>
+<td style="text-align: left;">Google button displayed generic <code>Globe</code> icon</td>
+<td style="text-align: left;"><strong>Trivial</strong></td>
+<td style="text-align: left;">Fallback icon from Lucide React used in initial UI prototype.</td>
+<td style="text-align: left;">Created authentic multi-colored SVG <code>GoogleIcon.tsx</code> using <code>react-native-svg</code>.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Official Google G branding rendered.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-007</strong></td>
+<td style="text-align: left;">Android Emulator froze with <em>"System UI isn't responding"</em> ANR</td>
+<td style="text-align: left;"><strong>Major</strong></td>
+<td style="text-align: left;">Default Pixel 6 profile ran at 1080×2400 in software-rendering mode, overloading Intel Core i3-4005U dual-core CPU.</td>
+<td style="text-align: left;">Lowered AVD resolution to 720×1280 (240 dpi), enabled <code>-gpu host</code> acceleration, disabled heavy device skin, and disabled OS window animations.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: Emulator runs smoothly at low CPU utilization.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>BUG-008</strong></td>
+<td style="text-align: left;">Ubuntu GNOME Desktop displayed <em>"Emulator Is Not Responding"</em> modal repeatedly</td>
+<td style="text-align: left;"><strong>Moderate</strong></td>
+<td style="text-align: left;">GNOME's 5-second <code>check-alive-timeout</code> ping watchdog triggered during GPU shader compilation and PulseAudio buffer sync.</td>
+<td style="text-align: left;">Set <code>org.gnome.mutter check-alive-timeout</code> to <code>0</code> and launched emulator with <code>-no-audio</code>.</td>
+<td style="text-align: left;"><strong>Resolved</strong>: OS popup completely eradicated.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. Testing and Quality Assurance</h2>
+<h3>5.1 Static Analysis &amp; Compilation</h3>
+<ul>
+<li><strong>TypeScript Static Check</strong>: Verified zero TypeScript errors across both projects:</li>
+<li><code>ditiro-drone</code>: <code>npx tsc --noEmit</code> -&gt; <strong>0 errors, Exit code 0</strong>.</li>
+<li><code>ditiro</code> (Web): Clean compilation.</li>
+<li><strong>Linting</strong>: Verified ESLint rules and syntax correctness across components.</li>
+</ul>
+<h3>5.2 Functional End-to-End Tests</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Test Case</th>
+<th style="text-align: left;">Scenario</th>
+<th style="text-align: left;">Expected Outcome</th>
+<th style="text-align: left;">Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>TC-01</strong></td>
+<td style="text-align: left;">Tap "Continue with Google" on standalone APK</td>
+<td style="text-align: left;">Native account chooser bottom sheet displays; selecting account logs in to Firebase.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-02</strong></td>
+<td style="text-align: left;">Tap "Switch Account" from Session Card</td>
+<td style="text-align: left;">Confirmation prompt opens; confirming logs out and returns to login with cleared Google session.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-03</strong></td>
+<td style="text-align: left;">Tap deed row in Workspace Deeds</td>
+<td style="text-align: left;">Opens <code>EditDeedModal</code> pre-populated with current deed properties.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-04</strong></td>
+<td style="text-align: left;">Modify deed schedule and tap "Save Changes"</td>
+<td style="text-align: left;">Updates Firestore doc, re-schedules notifications, and displays green floating confirmation toast.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-05</strong></td>
+<td style="text-align: left;">Check circle to complete deed on mobile</td>
+<td style="text-align: left;">Mobile UI marks deed as completed; web app's <code>useSync</code> listener receives change and updates Dexie in real time.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-06</strong></td>
+<td style="text-align: left;">Launch emulator via <code>./start-emulator.sh</code></td>
+<td style="text-align: left;">Launches 720p window with host GPU acceleration; boots in &lt;30s without System UI ANRs.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>TC-07</strong></td>
+<td style="text-align: left;">Run <code>npm run install:apk</code></td>
+<td style="text-align: left;">Streams build APK to running emulator and outputs <code>Success</code>.</td>
+<td style="text-align: left;"><strong>Passed</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>6. Build and Deployment Register</h2>
+<h3>6.1 Build Specifications</h3>
+<ul>
+<li><strong>Application ID:</strong> <code>com.ditiro.drone</code></li>
+<li><strong>Application Name:</strong> Ditiro Drone</li>
+<li><strong>Version:</strong> <code>1.0.0</code> (Version code <code>1</code>)</li>
+<li><strong>Expo SDK:</strong> <code>54.0.0</code></li>
+<li><strong>Target Platform:</strong> Android (Architecture: <code>arm64-v8a</code>, <code>armeabi-v7a</code>, <code>x86_64</code>)</li>
+<li><strong>Distribution Profile:</strong> <code>preview</code> (<code>buildType: apk</code>)</li>
+</ul>
+<h3>6.2 EAS Build Artifacts</h3>
+<ol>
+<li><strong>Build #1 (Initial Native Google Auth &amp; Fingerprints):</strong></li>
+<li><strong>Build ID:</strong> <code>f1663718-3613-4e1e-9544-7f6eba33957d</code></li>
+<li><strong>Commit:</strong> <a href="file:///home/azaria/ux-giants/ditiro"><code>91b0f85</code></a></li>
+<li><strong>Artifact:</strong> <code>UOaxd-A2Z604_mAKorD3HdbT-RMkcOg17SkaBfqiMt8.apk</code> (91.45 MB)</li>
+<li>
+<p><strong>Logs:</strong> <a href="https://expo.dev/accounts/ux-giants/projects/ditiro-drone/builds/f1663718-3613-4e1e-9544-7f6eba33957d">Expo Dashboard Build #1</a></p>
+</li>
+<li>
+<p><strong>Build #2 (UI Redesign, Edit Modal, Google G Logo, Account Switcher):</strong></p>
+</li>
+<li><strong>Build ID:</strong> <code>e35566a2-4233-4ad0-87b7-a5d202432af3</code></li>
+<li><strong>Commit:</strong> <a href="file:///home/azaria/ux-giants/ditiro"><code>a30b88f</code></a></li>
+<li><strong>Artifact:</strong> <code>tw38TVsna5igrGpQJ-Z49d-UHVW7XB-Q-XhsCkN3oUQ.apk</code> (91.47 MB)</li>
+<li><strong>Direct Download:</strong> <a href="https://expo.dev/artifacts/eas/tw38TVsna5igrGpQJ-Z49d-UHVW7XB-Q-XhsCkN3oUQ.apk">Latest Standalone APK</a></li>
+<li><strong>Logs:</strong> <a href="https://expo.dev/accounts/ux-giants/projects/ditiro-drone/builds/e35566a2-4233-4ad0-87b7-a5d202432af3">Expo Dashboard Build #2</a></li>
+</ol>
+<hr />
+<h2>7. Outstanding Work &amp; Technical Debt</h2>
+<h3>7.1 Immediate Next Phase Tasks</h3>
+<ol>
+<li><strong>"Hello Ditiro" Voice Evocation Engine</strong>:</li>
+<li>Implement speech-to-text model integration for hands-free task capture.</li>
+<li><strong>Offline Mutation Queue</strong>:</li>
+<li>Provide an AsyncStorage-backed local write-ahead log for deeds captured during complete internet disconnection, auto-flushing upon reconnection.</li>
+<li><strong>Biometric App Lock</strong>:</li>
+<li>Option to require Fingerprint / Face Unlock upon opening Ditiro Drone.</li>
+<li><strong>iOS Build Pipeline</strong>:</li>
+<li>Configure Apple Developer Team credentials and provision iOS TestFlight builds via EAS.</li>
+</ol>
+<h3>7.2 Technical Debt</h3>
+<ul>
+<li><strong>Shared Type Definitions</strong>: <code>TaskReminder</code> on mobile currently mirrors <code>Task</code> in Dexie/web. Consider extracting shared models to a common workspace package (<code>@ditiro/types</code>).</li>
+<li><strong>Encrypted Data Migration Cleanup</strong>: Old unencrypted Firestore documents still have fallbacks in <code>droneSync.ts</code>. A one-off batch migration script should be executed to ensure 100% of Firestore tasks have <code>encryptedData</code>.</li>
+</ul>
+<hr />
+<h2>8. Change Log</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Commit</th>
+<th style="text-align: left;">Date</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Affected Modules</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro"><code>91b0f85</code></a></td>
+<td style="text-align: left;">2026-09-29</td>
+<td style="text-align: left;">Configure <code>google-services.json</code>, SHA fingerprints, and EAS build settings</td>
+<td style="text-align: left;"><code>google-services.json</code>, <code>app.json</code>, <code>eas.json</code>, <code>LoginScreen.tsx</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro"><code>d58105d</code></a></td>
+<td style="text-align: left;">2026-09-29</td>
+<td style="text-align: left;">Add Google G icon, account switcher, logout confirmation, deed edit modal, and real-time sync</td>
+<td style="text-align: left;"><code>EditDeedModal.tsx</code>, <code>GoogleIcon.tsx</code>, <code>Toast.tsx</code>, <code>HomeScreen.tsx</code>, <code>droneSync.ts</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro"><code>d66e4ed</code></a></td>
+<td style="text-align: left;">2026-09-29</td>
+<td style="text-align: left;">Add standalone Android emulator runner and APK install scripts</td>
+<td style="text-align: left;"><code>start-emulator.sh</code>, <code>package.json</code>, <code>.gitignore</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro"><code>a30b88f</code></a></td>
+<td style="text-align: left;">2026-09-29</td>
+<td style="text-align: left;">Optimize emulator for Intel HD Graphics with 720p resolution and host GPU acceleration</td>
+<td style="text-align: left;"><code>config.ini</code>, <code>start-emulator.sh</code>, <code>package.json</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="file:///home/azaria/ux-giants/ditiro"><code>f10df1c</code></a></td>
+<td style="text-align: left;">2026-09-29</td>
+<td style="text-align: left;">Add <code>-no-audio</code> flag to prevent host audio buffer stalls on Linux</td>
+<td style="text-align: left;"><code>start-emulator.sh</code></td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

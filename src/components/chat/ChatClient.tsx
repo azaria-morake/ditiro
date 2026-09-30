@@ -10,7 +10,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import TaskCard from "@/components/tasks/TaskCard";
 import CreateTaskCard from "@/components/tasks/CreateTaskCard";
-import { DitiroIcon } from "../brand/Logos";
+import { DitiroIcon, DitiroMascot } from "../brand/Logos";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useDialog } from "@/components/ui/DialogProvider";
 
@@ -341,7 +341,7 @@ export default function ChatClient() {
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
                 {!currentChatId || (messages?.length === 0) ? (
                     <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                        <DitiroIcon className="w-20 h-20 text-[#e05012] mb-6" />
+                        <DitiroMascot className="w-24 h-24 mb-5 drop-shadow-[0_12px_32px_rgba(227,88,36,0.25)]" />
                         <h2 className="text-2xl font-bold text-neutral-100 mb-2">Hi, I'm Ditiro.</h2>
                         <p className="text-neutral-400 max-w-sm text-sm">Tell me what you need to get done, and I'll help you break it down.</p>
                     </div>
@@ -388,8 +388,8 @@ export default function ChatClient() {
                 )}
                 {isLoading && (
                     <div className="flex justify-start">
-                        <div className="bg-transparent text-[#e05012] rounded-2xl px-2 py-3 flex items-center gap-2 text-sm italic font-medium">
-                            <Loader2 className="animate-spin" size={16} /> Ditiro is thinking...
+                        <div className="bg-transparent text-[#E35824] rounded-2xl px-2 py-3 flex items-center gap-2 text-sm italic font-medium">
+                            <DitiroIcon className="w-4 h-4 text-[#E35824] animate-pulse" /> Ditiro is thinking...
                         </div>
                     </div>
                 )}
@@ -418,12 +418,14 @@ export default function ChatClient() {
                         disabled={isLoading}
                         rows={1}
                         style={{ overflowY: 'hidden' }}
-                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-3xl py-3.5 pl-6 pr-14 focus:outline-none focus:ring-1 focus:ring-[#e05012] transition-shadow disabled:opacity-50 text-sm resize-none min-h-[52px] leading-relaxed"
+                        className="w-full bg-neutral-900 border border-neutral-800 text-white rounded-3xl py-3.5 pl-6 pr-14 focus:outline-none focus:ring-1 focus:ring-[#E35824] transition-shadow disabled:opacity-50 text-sm resize-none min-h-[52px] leading-relaxed"
                     />
                     <button 
                         type="submit" 
                         disabled={!input.trim() || isLoading}
-                        className="absolute right-2 shrink-0 bottom-[9px] p-2 bg-[#e05012] hover:bg-[#e05012]/80 text-white rounded-full disabled:opacity-50 disabled:hover:bg-[#e05012] transition-colors"
+                        className="absolute right-2 shrink-0 bottom-[9px] p-2 bg-[#E35824] hover:bg-[#E35824]/90 text-white rounded-full disabled:opacity-40 disabled:bg-neutral-800 disabled:text-neutral-500 transition-all active:scale-95 shadow-md shadow-[#E35824]/20"
+                        title="Send message"
+                        aria-label="Send message"
                     >
                         <DitiroIcon className="w-[18px] h-[18px] text-white" />
                     </button>

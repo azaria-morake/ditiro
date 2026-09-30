@@ -7,6 +7,7 @@ import {
   getReactNativePersistence,
   Auth
 } from 'firebase/auth';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Firebase Client Config (Synchronized with main Ditiro Web Ecosystem)
@@ -23,15 +24,19 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const firestore = getFirestore(app);
 
-// Safe Auth initialization with AsyncStorage persistence for React Native
+// Safe Auth initialization: standard getAuth on Web, initializeAuth with AsyncStorage on Native
 let authInstance: Auth;
-try {
-  const persistenceOption = typeof getReactNativePersistence === 'function'
-    ? getReactNativePersistence(AsyncStorage)
-    : undefined;
-  authInstance = initializeAuth(app, persistenceOption ? { persistence: persistenceOption } : {});
-} catch (e) {
+if (Platform.OS === 'web') {
   authInstance = getAuth(app);
+} else {
+  try {
+    const persistenceOption = typeof getReactNativePersistence === 'function'
+      ? getReactNativePersistence(AsyncStorage)
+      : undefined;
+    authInstance = initializeAuth(app, persistenceOption ? { persistence: persistenceOption } : {});
+  } catch (e) {
+    authInstance = getAuth(app);
+  }
 }
 
 export const auth = authInstance;

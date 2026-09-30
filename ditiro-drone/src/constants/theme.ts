@@ -1,11 +1,18 @@
 export const COLORS = {
-  // Industrial Elegance Palette
-  background: "#2B2D31",       // Dark charcoal background
+  // Ditiro Brand Palette
+  proteaOrange: "#E35824",     // Primary brand orange
+  sunGold: "#F5AF28",          // Brand gold accent
+  deepCharcoal: "#2B2D31",     // Deep charcoal
+  midnightNavy: "#121826",     // Midnight navy
+
+  // Application Theme Role Mapping
+  background: "#2B2D31",       // Deep charcoal background
   cardBackground: "#1E2023",   // Elevated card background
   cardBorder: "#383B42",       // Subtle divider border
-  primaryAccent: "#D48C2B",    // Protea Gold primary accent
-  primaryAccentAlpha: "rgba(212, 140, 43, 0.15)",
-  secondaryAccent: "#E59E3B",  // Lighter Protea Gold for interactive highlights
+  primaryAccent: "#E35824",    // Protea Orange primary accent
+  primaryAccentAlpha: "rgba(227, 88, 36, 0.15)",
+  secondaryAccent: "#F5AF28",  // Sun Gold for interactive highlights
+  secondaryAccentAlpha: "rgba(245, 175, 40, 0.15)",
   softText: "#F2F4F7",         // Primary high-contrast text
   mutedText: "#8A9099",        // Secondary subtle label text
   danger: "#E55353",           // Alert / stop indicator

@@ -6,7 +6,7 @@ interface LogoProps {
 
 /**
  * DitiroBanner component
- * Uses mask-image to allow color styling via Tailwind classes (e.g., text-[#d48c2b] bg-current)
+ * Uses mask-image to allow color styling via Tailwind classes (e.g., text-[#E35824] bg-current)
  */
 export const DitiroBanner = ({ className }: LogoProps) => (
   <div 
@@ -42,6 +42,17 @@ export const DitiroIcon = ({ className }: LogoProps) => (
       WebkitMaskPosition: "center",
     }}
     aria-label="Ditiro Icon"
+  />
+);
+
+/**
+ * DitiroMascot component (Full-color brand character)
+ */
+export const DitiroMascot = ({ className }: LogoProps) => (
+  <img 
+    src="/ditiro-mascot.svg" 
+    alt="Ditiro Mascot" 
+    className={clsx("object-contain select-none pointer-events-none transition-transform", className)} 
   />
 );
 

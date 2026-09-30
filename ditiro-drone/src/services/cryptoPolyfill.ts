@@ -5,32 +5,43 @@ const g = (typeof globalThis !== 'undefined'
   ? globalThis
   : typeof global !== 'undefined'
   ? global
-  : window) as any;
+  : typeof window !== 'undefined'
+  ? window
+  : {}) as any;
 
-if (!g.crypto) {
-  g.crypto = {};
-}
+// If native crypto with getRandomValues already exists (e.g. Web browser), do not overwrite it
+if (!g.crypto || typeof g.crypto.getRandomValues !== 'function') {
+  const customCrypto = g.crypto || {};
+  customCrypto.getRandomValues = function <T extends ArrayBufferView>(array: T): T {
+    if (!array) {
+      throw new TypeError("Failed to execute 'getRandomValues': 1 argument required, but only 0 present.");
+    }
+    const uint8 = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
+    for (let i = 0; i < uint8.length; i++) {
+      // High-entropy blend of Math.random, timestamp jitter, and bitwise mixing
+      const r1 = Math.floor(Math.random() * 256);
+      const r2 = (Date.now() ^ (i * 2654435761)) & 0xff;
+      uint8[i] = (r1 ^ r2) & 0xff;
+    }
+    return array;
+  };
 
-// Ensure getRandomValues exists and fills any ArrayBufferView
-g.crypto.getRandomValues = function <T extends ArrayBufferView>(array: T): T {
-  if (!array) {
-    throw new TypeError("Failed to execute 'getRandomValues': 1 argument required, but only 0 present.");
+  try {
+    if (!g.crypto) {
+      g.crypto = customCrypto;
+    }
+  } catch {
+    // Ignore if property is read-only
   }
-  const uint8 = new Uint8Array(array.buffer, array.byteOffset, array.byteLength);
-  for (let i = 0; i < uint8.length; i++) {
-    // High-entropy blend of Math.random, timestamp jitter, and bitwise mixing
-    const r1 = Math.floor(Math.random() * 256);
-    const r2 = (Date.now() ^ (i * 2654435761)) & 0xff;
-    uint8[i] = (r1 ^ r2) & 0xff;
-  }
-  return array;
-};
 
-if (typeof global !== 'undefined') {
-  (global as any).crypto = g.crypto;
-}
-if (typeof self !== 'undefined') {
-  (self as any).crypto = g.crypto;
+  if (typeof global !== 'undefined' && !(global as any).crypto) {
+    try {
+      (global as any).crypto = customCrypto;
+    } catch {
+      // Ignore if property is read-only
+    }
+  }
 }
 
 export default g.crypto;
+
